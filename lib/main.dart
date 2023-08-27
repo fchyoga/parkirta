@@ -1,38 +1,92 @@
 import 'package:flutter/material.dart';
-import 'package:parkirta/auth/splash.dart';
-import 'package:parkirta/pelanggan/app.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:parkirta/bloc/auth_bloc.dart';
 import 'package:parkirta/color.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:parkirta/ui/auth/login_page.dart';
+import 'package:parkirta/ui/auth/pre_login_page.dart';
+import 'package:parkirta/ui/auth/register_page.dart';
+import 'package:parkirta/ui/auth/splash_page.dart';
+import 'package:parkirta/ui/home_page.dart';
+import 'package:parkirta/utils/contsant/authentication.dart';
+import 'package:sp_util/sp_util.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-
-  runApp(MainApp(isLoggedIn: isLoggedIn));
+  await SpUtil.getInstance();
+  Bloc.observer = AppBlocObserver();
+  runApp(App());
 }
 
-class MainApp extends StatelessWidget {
-  final bool isLoggedIn;
+/// Custom [BlocObserver] that observes all bloc and cubit state changes.
+class AppBlocObserver extends BlocObserver {
+  @override
+  void onChange(BlocBase bloc, Change change) {
+    super.onChange(bloc, change);
+    if (bloc is Cubit) debugPrint(change.toString());
+  }
 
-  const MainApp({Key? key, required this.isLoggedIn}) : super(key: key);
+  @override
+  void onTransition(Bloc bloc, Transition transition) {
+    super.onTransition(bloc, transition);
+    debugPrint(transition.toString());
+  }
+}
+
+class App extends StatelessWidget {
+  /// {@macro app}
+  const App({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    Widget home;
-    if (isLoggedIn) {
-      home = MyApp();
-    } else {
-      home = const SplashPage();
-    }
+    return BlocProvider(
+        create: (_) => AuthenticationBloc(),
+        child: const AppView()
+    );
+  }
+}
+
+class AppView extends StatelessWidget {
+
+  const AppView({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
 
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Parkirta',
-      theme: ThemeData(
-        primaryColor: Red50,
-      ),
-      home: home,
+        debugShowCheckedModeBanner: false,
+        title: 'Parkirta',
+        theme: ThemeData(
+          primaryColor: Red50,
+        ),
+        initialRoute: "/",
+        routes: {
+          '/': (context) => AppRoute(),
+          '/login': (context) => LoginPage(),
+          '/register': (context) => RegisterPage(),
+          '/pre_login': (context) => const PreLoginPage(),
+          '/home': (context) => HomePage(),
+        }
     );
+  }
+}
+
+class AppRoute extends StatelessWidget {
+  const AppRoute({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AuthenticationBloc, Authentication>(
+          builder: (context, state) {
+            debugPrint("state change $state");
+            switch (state) {
+              case Authentication.Authenticated:
+                return HomePage();
+              case Authentication.Unauthenticated:
+                return LoginPage();
+              default:
+                return const SplashPage();
+            }
+          },
+    );
+
   }
 }

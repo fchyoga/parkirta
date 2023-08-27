@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parkirta/color.dart';
-import 'package:parkirta/pelanggan/app.dart';
+import 'package:parkirta/ui/app.dart';
 
 class SubmittedPage extends StatefulWidget {
   @override

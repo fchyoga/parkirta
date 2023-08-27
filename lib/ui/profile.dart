@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:parkirta/color.dart';
 import 'package:http/http.dart' as http;
+import 'package:parkirta/ui/auth/pre_login_page.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:parkirta/auth/auth.dart';
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -127,7 +127,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => AuthPage()),
+                    MaterialPageRoute(builder: (context) => const PreLoginPage()),
                   );
                 },
                 style: ButtonStyle(

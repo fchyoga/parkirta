@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parkirta/color.dart';
-import 'package:parkirta/pelanggan/aktivasi.dart';
-import 'package:parkirta/pelanggan/submitted.dart';
+import 'package:parkirta/ui/aktivasi.dart';
+import 'package:parkirta/ui/submitted.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
