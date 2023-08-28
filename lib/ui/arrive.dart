@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:parkirta/pelanggan/api.dart'; // Import file API yang telah kita buat sebelumnya
+import 'package:parkirta/ui/api.dart'; // Import file API yang telah kita buat sebelumnya
 import 'package:parkirta/color.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart'; // Paket untuk menampilkan peta
 import 'package:http/http.dart' as http;

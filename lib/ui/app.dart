@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:parkirta/color.dart';
-import 'package:parkirta/pelanggan/wallet.dart';
-import 'package:parkirta/pelanggan/dompet.dart';
-import 'package:parkirta/pelanggan/home.dart';
-import 'package:parkirta/pelanggan/submitted.dart';
+import 'package:parkirta/ui/wallet.dart';
+import 'package:parkirta/ui/dompet.dart';
+import 'package:parkirta/ui/home_page.dart';
+import 'package:parkirta/ui/submitted.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';

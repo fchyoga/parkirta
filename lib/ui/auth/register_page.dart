@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:parkirta/ui/auth/login_page.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:parkirta/color.dart';
-import 'package:parkirta/auth/login.dart';
 
 class RegisterPage extends StatefulWidget {
   @override

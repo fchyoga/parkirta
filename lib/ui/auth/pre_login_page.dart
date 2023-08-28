@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:parkirta/bloc/auth_bloc.dart';
 import 'package:parkirta/color.dart';
-import 'package:parkirta/auth/login.dart';
-import 'package:parkirta/auth/register.dart';
+import 'package:parkirta/ui/auth/login_page.dart';
+import 'package:parkirta/ui/auth/register_page.dart';
 
-class AuthPage extends StatefulWidget {
-  const AuthPage({Key? key}) : super(key: key);
+class PreLoginPage extends StatefulWidget {
+  const PreLoginPage({Key? key}) : super(key: key);
 
   @override
-  _AuthPageState createState() => _AuthPageState();
+  _PreLoginPageState createState() => _PreLoginPageState();
 }
 
-class _AuthPageState extends State<AuthPage> {
+class _PreLoginPageState extends State<PreLoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isObscure = true;
@@ -54,9 +56,11 @@ class _AuthPageState extends State<AuthPage> {
                 children: [
                   TextButton(
                     onPressed: () {
-                      Navigator.push(
+                      context.read<AuthenticationBloc>().unAuthenticatedEvent();
+                      Navigator.pushNamedAndRemoveUntil(
                         context,
-                        MaterialPageRoute(builder: (context) => LoginPage()),
+                        "/",
+                        (route) => false,
                       );
                     },
                     style: ButtonStyle(
@@ -75,10 +79,10 @@ class _AuthPageState extends State<AuthPage> {
                   ),
                   const SizedBox(height: 16),
                   TextButton(
-                    onPressed: () {                      
-                      Navigator.push(
+                    onPressed: () {
+                      Navigator.pushNamed(
                         context,
-                        MaterialPageRoute(builder: (context) => RegisterPage()),
+                        "/register",
                       );
                     },
                     style: ButtonStyle(

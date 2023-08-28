@@ -1,25 +1,19 @@
-import 'package:flutter/material.dart';
-import 'package:parkirta/color.dart';
-import 'package:parkirta/pelanggan/profile.dart';
-import 'package:parkirta/pelanggan/api.dart';
-import 'package:parkirta/pelanggan/arrive.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:flutter_polyline_points/flutter_polyline_points.dart';
-import 'package:location/location.dart' as loc;
-import 'package:permission_handler/permission_handler.dart' as perm;
-import 'package:flutter/scheduler.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter/services.dart' show rootBundle;
-import 'dart:ui' as ui;
-import 'dart:typed_data';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
-import 'package:google_maps_webservice/places.dart';
-import 'package:flutter_google_places/flutter_google_places.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart' as maps;
+import 'package:location/location.dart' as loc;
+import 'package:parkirta/color.dart';
+import 'package:parkirta/ui/api.dart';
+import 'package:parkirta/ui/arrive.dart';
+import 'package:parkirta/ui/profile.dart';
+import 'package:permission_handler/permission_handler.dart' as perm;
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -237,18 +231,18 @@ class _HomePageState extends State<HomePage> {
         title: Row(
           children: [
             Padding(
-              padding: EdgeInsets.only(left: 24),
+              padding: const EdgeInsets.only(left: 24),
               child: Image.asset(
                 'assets/images/logo-parkirta2.png',
                 height: 40,
               ),
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
           ],
         ),
         actions: [
           Padding(
-            padding: EdgeInsets.only(right: 24),
+            padding: const EdgeInsets.only(right: 24),
             child: GestureDetector(
               onTap: () {
                 Navigator.push(
@@ -256,7 +250,7 @@ class _HomePageState extends State<HomePage> {
                   MaterialPageRoute(builder: (context) => ProfilePage()),
                 );
               },
-              child: CircleAvatar(
+              child: const CircleAvatar(
                 backgroundImage: AssetImage('assets/images/profile.png'),
                 radius: 20,
               ),
@@ -269,7 +263,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildMap() {
-    if (_parkingLocations!.isEmpty) { // Periksa apakah _parkingLocations adalah null atau kosong
+    if ((_parkingLocations??[]).isEmpty) { // Periksa apakah _parkingLocations adalah null atau kosong
       return Center(
         child: CircularProgressIndicator(),
       );
