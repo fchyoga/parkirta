@@ -19,7 +19,7 @@ class LoginResponse {
 
   bool success;
   String? message;
-  LoginData? data;
+  User? data;
 
 
   LoginResponse.withError(this.success, this.message);
@@ -27,39 +27,13 @@ class LoginResponse {
   factory LoginResponse.fromJson(Map<String, dynamic> json) => LoginResponse(
     success: json["success"],
     message: json["message"],
-    data: LoginData.fromJson(json["data"]),
+    data: User.fromJson(json["data"]),
   );
 
   Map<String, dynamic> toJson() => {
     "success": success,
     "message": message,
     "data": data?.toJson(),
-  };
-}
-
-
-
-class LoginData {
-  LoginData({
-    required this.accessToken,
-    required this.tokenType,
-    required this.user,
-  });
-
-  String accessToken;
-  String tokenType;
-  User user;
-
-  factory LoginData.fromJson(Map<String, dynamic> json) => LoginData(
-    accessToken: json["access_token"],
-    tokenType: json["token_type"],
-    user: User.fromJson(json["user"]),
-  );
-
-  Map<String, dynamic> toJson() => {
-    "access_token": accessToken,
-    "token_type": tokenType,
-    "user": user.toJson(),
   };
 }
 
