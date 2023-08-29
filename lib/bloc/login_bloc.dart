@@ -18,10 +18,10 @@ class LoginBloc extends Cubit<LoginState> {
     emit(LoginLoadingState(false));
     if (response.success) {
 
-      SpUtil.putString(API_TOKEN, response.data?.user.token ?? "");
+      SpUtil.putString(API_TOKEN, response.data?.token ?? "");
       // SpUtil.putInt(USER_ID, response.data?.user.id ?? 0);
-      SpUtil.putString(USER_NAME, response.data?.user.name?? "");
-      SpUtil.putString(EMAIL, response.data?.user.email?? "");
+      SpUtil.putString(USER_NAME, response.data?.name?? "");
+      SpUtil.putString(EMAIL, response.data?.email?? "");
       SpUtil.putBool(IS_LOGGED_IN, true);
 
       emit(LoginSuccessState());

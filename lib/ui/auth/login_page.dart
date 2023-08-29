@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:http/http.dart' as http;
 import 'package:parkirta/bloc/auth_bloc.dart';
 import 'package:parkirta/bloc/login_bloc.dart';
-import 'package:parkirta/utils/contsant/user_const.dart';
-import 'package:parkirta/widget/loading_dialog.dart';
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:parkirta/color.dart';
-import 'package:parkirta/ui/app.dart';
-import 'package:sp_util/sp_util.dart';
+import 'package:parkirta/widget/loading_dialog.dart';
 import 'package:top_snackbar_flutter/custom_snack_bar.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
 
@@ -41,19 +35,12 @@ class _LoginPageState extends State<LoginPage> {
                     (route) => false,
               );
             } else if (state is LoginErrorState) {
-              SpUtil.putBool(IS_LOGGED_IN, true);
-              _context.read<AuthenticationBloc>().authenticatedEvent();
-              Navigator.pushNamedAndRemoveUntil(
+              showTopSnackBar(
                 context,
-                "/",
-                    (route) => false,
+                CustomSnackBar.error(
+                  message: state.error,
+                ),
               );
-              // showTopSnackBar(
-              //   context,
-              //   CustomSnackBar.error(
-              //     message: state.error,
-              //   ),
-              // );
             }
           },
           child: BlocBuilder<LoginBloc, LoginState>(

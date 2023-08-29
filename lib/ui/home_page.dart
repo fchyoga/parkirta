@@ -264,7 +264,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildMap() {
     if ((_parkingLocations??[]).isEmpty) { // Periksa apakah _parkingLocations adalah null atau kosong
-      return Center(
+      return const Center(
         child: CircularProgressIndicator(),
       );
     } else {
@@ -272,7 +272,7 @@ class _HomePageState extends State<HomePage> {
         children: [
           GoogleMap(
             onMapCreated: _onMapCreated,
-            initialCameraPosition: CameraPosition(
+            initialCameraPosition: const CameraPosition(
               target: LatLng(-5.143648100120257, 119.48282708990482), // Ganti dengan posisi awal peta
               zoom: 20.0,
             ),
