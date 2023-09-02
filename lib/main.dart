@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:parkirta/bloc/auth_bloc.dart';
 import 'package:parkirta/color.dart';
@@ -50,6 +51,9 @@ class AppView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark));
 
     return MaterialApp(
         debugShowCheckedModeBanner: false,

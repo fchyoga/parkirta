@@ -232,6 +232,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Red500,
         toolbarHeight: 84,
@@ -252,7 +253,7 @@ class _HomePageState extends State<HomePage> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 24),
-            child: GestureDetector(
+            child: InkWell(
               onTap: () {
                 Navigator.push(
                   context,
@@ -267,11 +268,11 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: _buildMap(),
+      body:_buildMap(context),
     );
   }
 
-  Widget _buildMap() {
+  Widget _buildMap(BuildContext context) {
     // if ((_parkingLocations??[]).isEmpty) { // Periksa apakah _parkingLocations adalah null atau kosong
     //   return const Center(
     //     child: CircularProgressIndicator(),
@@ -279,46 +280,50 @@ class _HomePageState extends State<HomePage> {
     // } else {
       return Stack(
         children: [
-          GoogleMap(
-            onMapCreated: _onMapCreated,
-            mapType: MapType.hybrid,
-            initialCameraPosition: const CameraPosition(
-              target: LatLng(-5.143648100120257, 119.48282708990482), // Ganti dengan posisi awal peta
-              zoom: 20.0,
-            ),
-            markers: Set<Marker>.from(_parkingLocations.map((location) => Marker(
-              markerId: MarkerId(location['id'].toString()),
-              position: LatLng(
-                double.parse(location['lat']),
-                double.parse(location['long']),
+          Container(
+            height: MediaQuery.of(context).size.height,
+            child: GoogleMap(
+              onMapCreated: _onMapCreated,
+
+              mapType: MapType.normal,
+              initialCameraPosition: const CameraPosition(
+                target: LatLng(-5.143648100120257, 119.48282708990482), // Ganti dengan posisi awal peta
+                zoom: 20.0,
               ),
-              icon: defaultIcon,
-              onTap: () {
-                _showParkingLocationPopup(context, location);
-              },
-            ))).union(_myLocationMarker),
-            polylines: _polylines,
-            polygons: Set<Polygon>.from(_parkingLocations!.map((location) {
-              List<String> areaLatLongStrings = location['area_latlong'].split('},{');
-              List<LatLng> polygonCoordinates = areaLatLongStrings.map<LatLng>((areaLatLongString) {
-                String latLngString = areaLatLongString.replaceAll('{', '').replaceAll('}', '');
-                List<String> latLngList = latLngString.split(',');
+              markers: Set<Marker>.from(_parkingLocations.map((location) => Marker(
+                markerId: MarkerId(location['id'].toString()),
+                position: LatLng(
+                  double.parse(location['lat']),
+                  double.parse(location['long']),
+                ),
+                icon: defaultIcon,
+                onTap: () {
+                  _showParkingLocationPopup(context, location);
+                },
+              ))).union(_myLocationMarker),
+              polylines: _polylines,
+              polygons: Set<Polygon>.from(_parkingLocations!.map((location) {
+                List<String> areaLatLongStrings = location['area_latlong'].split('},{');
+                List<LatLng> polygonCoordinates = areaLatLongStrings.map<LatLng>((areaLatLongString) {
+                  String latLngString = areaLatLongString.replaceAll('{', '').replaceAll('}', '');
+                  List<String> latLngList = latLngString.split(',');
 
-                double lat = double.parse(latLngList[0].split(':')[1]);
-                double lng = double.parse(latLngList[1].split(':')[1]);
+                  double lat = double.parse(latLngList[0].split(':')[1]);
+                  double lng = double.parse(latLngList[1].split(':')[1]);
 
-                return LatLng(lat, lng);
-              }).toList();
+                  return LatLng(lat, lng);
+                }).toList();
 
-              return Polygon(
-                polygonId: PolygonId(location['id'].toString()),
-                points: polygonCoordinates,
-                fillColor: Colors.blue.withOpacity(0.3),
-                strokeColor: Colors.blue,
-                strokeWidth: 2,
-              );
-            })),
+                return Polygon(
+                  polygonId: PolygonId(location['id'].toString()),
+                  points: polygonCoordinates,
+                  fillColor: Colors.blue.withOpacity(0.3),
+                  strokeColor: Colors.blue,
+                  strokeWidth: 2,
+                );
+              })),
 
+            ),
           ),
           Positioned(
             top: 16.0,
@@ -342,10 +347,21 @@ class _HomePageState extends State<HomePage> {
     String namaJukir = location['relasi_jukir'][0]['jukir']['nama_lengkap'];
     String statusJukir = location['relasi_jukir'][0]['jukir']['status_jukir'];
     String statusParkir = location['status'];
-    showModalBottomSheet(
-        context: _context,
-        builder: (context) {
-          return  Column(
+
+    showDialog(
+      context: context,
+      builder: (context) {
+
+        return AlertDialog(
+          title: Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Gray500,
+            ),
+          ),
+          content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -432,113 +448,10 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ],
-          );
-        });
-
-    // showDialog(
-    //   context: context,
-    //   builder: (context) {
-    //
-    //     return AlertDialog(
-    //       title: Text(
-    //         title,
-    //         style: TextStyle(
-    //           fontSize: 12,
-    //           fontWeight: FontWeight.bold,
-    //           color: Gray500,
-    //         ),
-    //       ),
-    //       content: Column(
-    //         mainAxisSize: MainAxisSize.min,
-    //         crossAxisAlignment: CrossAxisAlignment.start,
-    //         children: [
-    //           Row(
-    //             children: [
-    //               CircleAvatar(
-    //                 backgroundImage: AssetImage(fotoProfileUrl),
-    //                 radius: 20,
-    //               ),
-    //               SizedBox(width: 8),
-    //               Column(
-    //                 crossAxisAlignment: CrossAxisAlignment.start,
-    //                 children: [
-    //                   Text(
-    //                     namaJukir,
-    //                     style: TextStyle(
-    //                       fontSize: 14,
-    //                       fontWeight: FontWeight.bold,
-    //                       color: Red900,
-    //                     ),
-    //                   ),
-    //                   Text(
-    //                     'Status: $statusJukir',
-    //                     style: TextStyle(
-    //                       fontSize: 10,
-    //                       fontWeight: FontWeight.normal,
-    //                       color: Gray500,
-    //                     ),
-    //                   ),
-    //                 ],
-    //               ),
-    //             ],
-    //           ),
-    //           SizedBox(height: 8),
-    //           Row(
-    //             mainAxisAlignment: MainAxisAlignment.center,
-    //             crossAxisAlignment: CrossAxisAlignment.center,
-    //             children: [
-    //               Text(
-    //                 'Status: ',
-    //                 style: TextStyle(
-    //                   fontSize: 12,
-    //                   fontWeight: FontWeight.normal,
-    //                   color: Gray500,
-    //                 ),
-    //               ),
-    //               SizedBox(width: 8),
-    //               Container(
-    //                 decoration: BoxDecoration(
-    //                   color: Colors.green,
-    //                   borderRadius: BorderRadius.circular(8),
-    //                 ),
-    //                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-    //                 child: Text(
-    //                   statusParkir,
-    //                   style: TextStyle(
-    //                     fontSize: 10,
-    //                     fontWeight: FontWeight.normal,
-    //                     color: Colors.white,
-    //                   ),
-    //                 ),
-    //               ),
-    //             ],
-    //           ),
-    //           SizedBox(height: 16),
-    //           Center(
-    //             child: TextButton(
-    //               onPressed: () {
-    //                 Navigator.pop(context);
-    //                 _navigateToArrivePage(location);
-    //               },
-    //               style: ButtonStyle(
-    //                 backgroundColor: MaterialStateProperty.all<Color>(Red500),
-    //                 foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-    //                 minimumSize: MaterialStateProperty.all<Size>(Size(88, 36)),
-    //                 padding: MaterialStateProperty.all<EdgeInsetsGeometry>(EdgeInsets.all(8)),
-    //                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-    //                   RoundedRectangleBorder(
-    //                     borderRadius: BorderRadius.circular(5),
-    //                   ),
-    //                 ),
-    //               ),
-    //               child: const Text('Arahkan saya'),
-    //             ),
-    //           ),
-    //         ],
-    //       ),
-    //     );
-    //   },
-    // );
+          ),
+        );
+      },
+    );
 
 
   }
