@@ -12,25 +12,25 @@ class HomeBloc extends Cubit<LoginState> {
 
 
   void doLogin(String email, String password) async {
-    emit(LoginLoadingState(true));
-    final response =
-        await _userRepository.login(email, password);
-    emit(LoginLoadingState(false));
-    if (response.success) {
-
-      SpUtil.putString(API_TOKEN, response.data?.user.token ?? "");
-      // SpUtil.putInt(USER_ID, response.data?.user.id ?? 0);
-      SpUtil.putString(USER_NAME, response.data?.user.name?? "");
-      SpUtil.putString(EMAIL, response.data?.user.email?? "");
-      SpUtil.putBool(IS_LOGGED_IN, true);
-
-      emit(LoginSuccessState());
-
-
-
-    } else {
-      emit(LoginErrorState(error: response.message ?? "Login failed !"));
-    }
+    // emit(LoginLoadingState(true));
+    // final response =
+    //     await _userRepository.login(email, password);
+    // emit(LoginLoadingState(false));
+    // if (response.success) {
+    //
+    //   SpUtil.putString(API_TOKEN, response.data?.user.token ?? "");
+    //   // SpUtil.putInt(USER_ID, response.data?.user.id ?? 0);
+    //   SpUtil.putString(USER_NAME, response.data?.user.name?? "");
+    //   SpUtil.putString(EMAIL, response.data?.user.email?? "");
+    //   SpUtil.putBool(IS_LOGGED_IN, true);
+    //
+    //   emit(LoginSuccessState());
+    //
+    //
+    //
+    // } else {
+    //   emit(LoginErrorState(error: response.message ?? "Login failed !"));
+    // }
   }
 }
 

@@ -23,7 +23,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late GoogleMapController _mapController;
-  List<dynamic>? _parkingLocations;
+  List<dynamic> _parkingLocations = [];
   Set<Polyline> _polylines = {};
 
   Set<Marker> _myLocationMarker = {};
@@ -36,6 +36,13 @@ class _HomePageState extends State<HomePage> {
   Polyline _polyline = Polyline(polylineId: PolylineId('route'), points: []);
 
   loc.Location _location = loc.Location();
+
+  @override
+  void setState(fn) {
+    if(mounted) {
+      super.setState(fn);
+    }
+  }
 
   bool isInLocationArea(LatLng userPosition, List<LatLng> polygonCoordinates) {
     // Buat variabel untuk menyimpan jumlah persimpangan dengan batas poligon
@@ -72,9 +79,6 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _loadParkIcon();
-    _fetchParkingLocations();
-    _getUserLocation();
   }
 
   @override
@@ -90,14 +94,14 @@ class _HomePageState extends State<HomePage> {
           currentLocation.latitude!,
           currentLocation.longitude!,
         );
-        _myLocationMarker = Set<Marker>.from([
+        _myLocationMarker = <Marker>{
           Marker(
-            markerId: MarkerId('my_location'),
+            markerId: const MarkerId('my_location'),
             position: _myLocation,
             icon: myLocationIcon,
-            infoWindow: InfoWindow(title: 'My Location'),
+            infoWindow: const InfoWindow(title: 'My Location'),
           ),
-        ]);
+        };
       });
     });
   }
@@ -195,14 +199,15 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _parkingLocations = locations;
       });
-    } catch (error) {
+    } catch (error, stackTrace) {
       // Handle error fetching parking locations
-      print('Error fetching parking locations: $error');
+      debugPrintStack(label: 'Error fetching parking locations: $error',stackTrace: stackTrace);
     }
   }
 
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
+    debugPrint("map created");
 
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (_mapController != '') {
@@ -218,6 +223,10 @@ class _HomePageState extends State<HomePage> {
         });
       }
     });
+
+    _loadParkIcon();
+    _fetchParkingLocations();
+    _getUserLocation();
   }
 
   @override
@@ -263,20 +272,21 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildMap() {
-    if ((_parkingLocations??[]).isEmpty) { // Periksa apakah _parkingLocations adalah null atau kosong
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    } else {
+    // if ((_parkingLocations??[]).isEmpty) { // Periksa apakah _parkingLocations adalah null atau kosong
+    //   return const Center(
+    //     child: CircularProgressIndicator(),
+    //   );
+    // } else {
       return Stack(
         children: [
           GoogleMap(
             onMapCreated: _onMapCreated,
+            mapType: MapType.hybrid,
             initialCameraPosition: const CameraPosition(
               target: LatLng(-5.143648100120257, 119.48282708990482), // Ganti dengan posisi awal peta
               zoom: 20.0,
             ),
-            markers: Set<Marker>.from(_parkingLocations!.map((location) => Marker(
+            markers: Set<Marker>.from(_parkingLocations.map((location) => Marker(
               markerId: MarkerId(location['id'].toString()),
               position: LatLng(
                 double.parse(location['lat']),
@@ -284,7 +294,7 @@ class _HomePageState extends State<HomePage> {
               ),
               icon: defaultIcon,
               onTap: () {
-                _showParkingLocationPopup(location);
+                _showParkingLocationPopup(context, location);
               },
             ))).union(_myLocationMarker),
             polylines: _polylines,
@@ -308,6 +318,7 @@ class _HomePageState extends State<HomePage> {
                 strokeWidth: 2,
               );
             })),
+
           ),
           Positioned(
             top: 16.0,
@@ -321,29 +332,20 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       );
-    }
+    // }
   }
   
-  void _showParkingLocationPopup(Map<String, dynamic> location) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        String title = location['nama_lokasi'];
-        String fotoProfileUrl = 'assets/images/profile.png';
-        String namaJukir = location['relasi_jukir'][0]['jukir']['nama_lengkap'];
-        String statusJukir = location['relasi_jukir'][0]['jukir']['status_jukir'];
-        String statusParkir = location['status'];
-
-        return AlertDialog(
-          title: Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Gray500,
-            ),
-          ),
-          content: Column(
+  void _showParkingLocationPopup(BuildContext _context, Map<String, dynamic> location) {
+    debugPrint("_showParkingLocationPopup");
+    String title = location['nama_lokasi'];
+    String fotoProfileUrl = 'assets/images/profile.png';
+    String namaJukir = location['relasi_jukir'][0]['jukir']['nama_lengkap'];
+    String statusJukir = location['relasi_jukir'][0]['jukir']['status_jukir'];
+    String statusParkir = location['status'];
+    showModalBottomSheet(
+        context: _context,
+        builder: (context) {
+          return  Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -430,10 +432,115 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ],
-          ),
-        );
-      },
-    );
+          );
+        });
+
+    // showDialog(
+    //   context: context,
+    //   builder: (context) {
+    //
+    //     return AlertDialog(
+    //       title: Text(
+    //         title,
+    //         style: TextStyle(
+    //           fontSize: 12,
+    //           fontWeight: FontWeight.bold,
+    //           color: Gray500,
+    //         ),
+    //       ),
+    //       content: Column(
+    //         mainAxisSize: MainAxisSize.min,
+    //         crossAxisAlignment: CrossAxisAlignment.start,
+    //         children: [
+    //           Row(
+    //             children: [
+    //               CircleAvatar(
+    //                 backgroundImage: AssetImage(fotoProfileUrl),
+    //                 radius: 20,
+    //               ),
+    //               SizedBox(width: 8),
+    //               Column(
+    //                 crossAxisAlignment: CrossAxisAlignment.start,
+    //                 children: [
+    //                   Text(
+    //                     namaJukir,
+    //                     style: TextStyle(
+    //                       fontSize: 14,
+    //                       fontWeight: FontWeight.bold,
+    //                       color: Red900,
+    //                     ),
+    //                   ),
+    //                   Text(
+    //                     'Status: $statusJukir',
+    //                     style: TextStyle(
+    //                       fontSize: 10,
+    //                       fontWeight: FontWeight.normal,
+    //                       color: Gray500,
+    //                     ),
+    //                   ),
+    //                 ],
+    //               ),
+    //             ],
+    //           ),
+    //           SizedBox(height: 8),
+    //           Row(
+    //             mainAxisAlignment: MainAxisAlignment.center,
+    //             crossAxisAlignment: CrossAxisAlignment.center,
+    //             children: [
+    //               Text(
+    //                 'Status: ',
+    //                 style: TextStyle(
+    //                   fontSize: 12,
+    //                   fontWeight: FontWeight.normal,
+    //                   color: Gray500,
+    //                 ),
+    //               ),
+    //               SizedBox(width: 8),
+    //               Container(
+    //                 decoration: BoxDecoration(
+    //                   color: Colors.green,
+    //                   borderRadius: BorderRadius.circular(8),
+    //                 ),
+    //                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    //                 child: Text(
+    //                   statusParkir,
+    //                   style: TextStyle(
+    //                     fontSize: 10,
+    //                     fontWeight: FontWeight.normal,
+    //                     color: Colors.white,
+    //                   ),
+    //                 ),
+    //               ),
+    //             ],
+    //           ),
+    //           SizedBox(height: 16),
+    //           Center(
+    //             child: TextButton(
+    //               onPressed: () {
+    //                 Navigator.pop(context);
+    //                 _navigateToArrivePage(location);
+    //               },
+    //               style: ButtonStyle(
+    //                 backgroundColor: MaterialStateProperty.all<Color>(Red500),
+    //                 foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+    //                 minimumSize: MaterialStateProperty.all<Size>(Size(88, 36)),
+    //                 padding: MaterialStateProperty.all<EdgeInsetsGeometry>(EdgeInsets.all(8)),
+    //                 shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+    //                   RoundedRectangleBorder(
+    //                     borderRadius: BorderRadius.circular(5),
+    //                   ),
+    //                 ),
+    //               ),
+    //               child: const Text('Arahkan saya'),
+    //             ),
+    //           ),
+    //         ],
+    //       ),
+    //     );
+    //   },
+    // );
+
+
   }
 
   Set<Marker> _buildMarkers() {
@@ -452,26 +559,17 @@ class _HomePageState extends State<HomePage> {
         position: LatLng(lat, lng),
         icon: icon,
         onTap: () {
-          _showParkingInfo(location);
+          _showParkingInfo(context, location);
         },
       );
     }).toSet();
   }
 
-  void _showParkingInfo(Map<String, dynamic> location) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            'Parkir Disini',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[500],
-            ),
-          ),
-          content: Column(
+  void _showParkingInfo(BuildContext _context, Map<String, dynamic> location) {
+    showModalBottomSheet(
+        context: _context,
+        builder: (context) {
+          return Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -493,31 +591,67 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _navigateToArrivePage(location);
-              },
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Red500),
-                foregroundColor: MaterialStateProperty.all<Color>(Red50),
-                minimumSize: MaterialStateProperty.all<Size>(
-                  const Size(double.infinity, 48),
-                ),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                ),
-              ),
-              child: const Text('Parkir Disini'),
-            ),
-          ],
-        );
-      },
-    );
+          );
+        });
+    // showDialog(
+    //   context: context,
+    //   builder: (BuildContext context) {
+    //     return AlertDialog(
+    //       title: Text(
+    //         'Parkir Disini',
+    //         style: TextStyle(
+    //           fontSize: 12,
+    //           fontWeight: FontWeight.bold,
+    //           color: Colors.grey[500],
+    //         ),
+    //       ),
+    //       content: Column(
+    //         mainAxisSize: MainAxisSize.min,
+    //         crossAxisAlignment: CrossAxisAlignment.start,
+    //         children: [
+    //           Text(
+    //             'Anda sudah dekat dengan lokasi parkir.',
+    //             style: TextStyle(
+    //               fontSize: 12,
+    //               fontWeight: FontWeight.normal,
+    //               color: Colors.black,
+    //             ),
+    //           ),
+    //           SizedBox(height: 8),
+    //           Text(
+    //             'Apakah Anda ingin parkir di sini?',
+    //             style: TextStyle(
+    //               fontSize: 12,
+    //               fontWeight: FontWeight.normal,
+    //               color: Colors.black,
+    //             ),
+    //           ),
+    //         ],
+    //       ),
+    //       actions: [
+    //         TextButton(
+    //           onPressed: () {
+    //             Navigator.pop(context);
+    //             _navigateToArrivePage(location);
+    //           },
+    //           style: ButtonStyle(
+    //             backgroundColor: MaterialStateProperty.all<Color>(Red500),
+    //             foregroundColor: MaterialStateProperty.all<Color>(Red50),
+    //             minimumSize: MaterialStateProperty.all<Size>(
+    //               const Size(double.infinity, 48),
+    //             ),
+    //             shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+    //               RoundedRectangleBorder(
+    //                 borderRadius: BorderRadius.circular(5),
+    //               ),
+    //             ),
+    //           ),
+    //           child: const Text('Parkir Disini'),
+    //         ),
+    //       ],
+    //     );
+    //   },
+    // );
   }
 
   void _navigateToArrivePage(Map<String, dynamic> location) async {
