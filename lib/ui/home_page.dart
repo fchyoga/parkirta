@@ -1,19 +1,26 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:location/location.dart' as loc;
+import 'package:parkirta/bloc/home_bloc.dart';
 import 'package:parkirta/color.dart';
 import 'package:parkirta/ui/api.dart';
-import 'package:parkirta/ui/arrive.dart';
 import 'package:parkirta/ui/profile.dart';
+import 'package:parkirta/utils/contsant/transaction_const.dart';
+import 'package:parkirta/widget/loading_dialog.dart';
 import 'package:permission_handler/permission_handler.dart' as perm;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sp_util/sp_util.dart';
+import 'package:top_snackbar_flutter/custom_snack_bar.dart';
+import 'package:top_snackbar_flutter/top_snack_bar.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -22,12 +29,16 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+
+  late BuildContext _context;
+  final _loadingDialog = LoadingDialog();
   late GoogleMapController _mapController;
   List<dynamic> _parkingLocations = [];
   Set<Polyline> _polylines = {};
 
   Set<Marker> _myLocationMarker = {};
   LatLng _myLocation = LatLng(0, 0);
+  Map<String, dynamic>? selectedLocation;
 
   PolylinePoints polylinePoints = PolylinePoints();
 
@@ -78,6 +89,15 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
+    Timer(Duration(seconds: 1), (){
+      var retributionActive = SpUtil.getInt(RETRIBUTION_ID_ACTIVE);
+      if(retributionActive!=null){
+        Navigator.pushNamed(
+            _context,
+            "/arrive"
+        );
+      }
+    });
     super.initState();
   }
 
@@ -180,14 +200,14 @@ class _HomePageState extends State<HomePage> {
       _myLocation = _locationData != null
         ? LatLng(_locationData.latitude!, _locationData.longitude!)
         : LatLng(0, 0);
-      _myLocationMarker = Set<Marker>.from([
+      _myLocationMarker = <Marker>{
         Marker(
           markerId: MarkerId('my_location'),
           position: _myLocation,
           icon: myLocationIcon,
           infoWindow: InfoWindow(title: 'My Location'),
         ),
-      ]);
+      };
     });
 
     _mapController.animateCamera(CameraUpdate.newLatLng(_myLocation));
@@ -212,14 +232,14 @@ class _HomePageState extends State<HomePage> {
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (_mapController != '') {
         setState(() {
-          _myLocationMarker = Set<Marker>.from([
+          _myLocationMarker = <Marker>{
             Marker(
               markerId: MarkerId('my_location'),
               position: _myLocation,
               icon: myLocationIcon,
               infoWindow: InfoWindow(title: 'My Location'),
             ),
-          ]);
+          };
         });
       }
     });
@@ -231,7 +251,31 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocProvider(
+        create: (context) => HomeBloc(),
+        child: BlocListener<HomeBloc, HomeState>(
+            listener: (context, state) {
+              if (state is LoadingState) {
+                state.show ? _loadingDialog.show(context) : _loadingDialog.hide();
+                } else if (state is SuccessSubmitArrivalState) {
+                SpUtil.putInt(RETRIBUTION_ID_ACTIVE, state.data.idRetribusiParkir);
+                Navigator.pushNamed(
+                    context,
+                    "/arrive"
+                );
+              } else if (state is ErrorState) {
+                showTopSnackBar(
+                  context,
+                  CustomSnackBar.error(
+                    message: state.error,
+                  ),
+                );
+              }
+            },
+            child: BlocBuilder<HomeBloc, HomeState>(
+                builder: (context, state) {
+                  _context = context;
+                  return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Red500,
@@ -269,6 +313,9 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body:_buildMap(context),
+    ); 
+                })
+        )
     );
   }
 
@@ -479,10 +526,19 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showParkingInfo(BuildContext _context, Map<String, dynamic> location) {
-    showModalBottomSheet(
-        context: _context,
-        builder: (context) {
-          return Column(
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Parkir Disini',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[500],
+            ),
+          ),
+          content: const Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -504,71 +560,36 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ],
-          );
-        });
-    // showDialog(
-    //   context: context,
-    //   builder: (BuildContext context) {
-    //     return AlertDialog(
-    //       title: Text(
-    //         'Parkir Disini',
-    //         style: TextStyle(
-    //           fontSize: 12,
-    //           fontWeight: FontWeight.bold,
-    //           color: Colors.grey[500],
-    //         ),
-    //       ),
-    //       content: Column(
-    //         mainAxisSize: MainAxisSize.min,
-    //         crossAxisAlignment: CrossAxisAlignment.start,
-    //         children: [
-    //           Text(
-    //             'Anda sudah dekat dengan lokasi parkir.',
-    //             style: TextStyle(
-    //               fontSize: 12,
-    //               fontWeight: FontWeight.normal,
-    //               color: Colors.black,
-    //             ),
-    //           ),
-    //           SizedBox(height: 8),
-    //           Text(
-    //             'Apakah Anda ingin parkir di sini?',
-    //             style: TextStyle(
-    //               fontSize: 12,
-    //               fontWeight: FontWeight.normal,
-    //               color: Colors.black,
-    //             ),
-    //           ),
-    //         ],
-    //       ),
-    //       actions: [
-    //         TextButton(
-    //           onPressed: () {
-    //             Navigator.pop(context);
-    //             _navigateToArrivePage(location);
-    //           },
-    //           style: ButtonStyle(
-    //             backgroundColor: MaterialStateProperty.all<Color>(Red500),
-    //             foregroundColor: MaterialStateProperty.all<Color>(Red50),
-    //             minimumSize: MaterialStateProperty.all<Size>(
-    //               const Size(double.infinity, 48),
-    //             ),
-    //             shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-    //               RoundedRectangleBorder(
-    //                 borderRadius: BorderRadius.circular(5),
-    //               ),
-    //             ),
-    //           ),
-    //           child: const Text('Parkir Disini'),
-    //         ),
-    //       ],
-    //     );
-    //   },
-    // );
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _navigateToArrivePage(location);
+              },
+              style: ButtonStyle(
+                backgroundColor: MaterialStateProperty.all<Color>(Red500),
+                foregroundColor: MaterialStateProperty.all<Color>(Red50),
+                minimumSize: MaterialStateProperty.all<Size>(
+                  const Size(double.infinity, 48),
+                ),
+                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                ),
+              ),
+              child: const Text('Parkir Disini'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _navigateToArrivePage(Map<String, dynamic> location) async {
     try {
+      selectedLocation = location;
       // Mendapatkan koordinat tujuan (lokasi parkir)
       LatLng destination = LatLng(double.parse(location['lat']), double.parse(location['long']));
 
@@ -608,7 +629,7 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     Text(
                       location['nama_lokasi'],
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
@@ -620,20 +641,15 @@ class _HomePageState extends State<HomePage> {
                     ElevatedButton(
                       onPressed: () async {
                         int userId = await getUserId();
-                        dynamic result = await confirmParkingArrival(
-                          location['id'],
-                          userId,
-                          _myLocation.latitude,
-                          _myLocation.longitude,
+                        _context.read<HomeBloc>().submitArrival(
+                          location['id'].toString(),
+                          userId.toString(),
+                          _myLocation.latitude.toString(),
+                          _myLocation.longitude.toString(),
                         );
-                        String status = result['status_parkir'];
+
                         Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ArrivePage(location: location, status: status),
-                          ),
-                        );
+
                       },
                       style: ButtonStyle(
                         backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
