@@ -7,4 +7,10 @@ class Endpoint {
   bool isDevelopment = _baseUrl == 'https://parkirta.com/api/';
 
   static const String urlLogin= '${_baseUrl}login/pelanggan';
+  static const String urlArrival= '${_baseUrl}retribusi/parking/arrive';
+  static const String urlCheckDetailParking= '${_baseUrl}retribusi/parking/check/detail';
+  static const String urlPaymentCheck= '${_baseUrl}retribusi/payment/choice';
+  static const String urlPaymentEntry= '${_baseUrl}retribusi/payment/entry';
+  static const String urlPaymentCheckout= '${_baseUrl}retribusi/payment/checkout';
+  static const String urlPaymentJukir= '${_baseUrl}retribusi/payment/jukir';
 }

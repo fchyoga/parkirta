@@ -45,7 +45,6 @@ class _LoginPageState extends State<LoginPage> {
           },
           child: BlocBuilder<LoginBloc, LoginState>(
             builder: (context, state) {
-              // _context = context;
               _context = context;
               return Scaffold(
                 body: SingleChildScrollView(

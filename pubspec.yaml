@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  intl: ^0.18.0
   google_maps_flutter: ^2.2.0
   http: ^0.13.3
   shared_preferences: ^2.0.8
@@ -27,6 +28,7 @@ dependencies:
   flutter_bloc: ^8.0.1
   shimmer: ^2.0.0
   top_snackbar_flutter: ^1.0.0
+  flutter_screen_lock: ^9.0.1
 
 
 dev_dependencies:
@@ -43,3 +45,9 @@ flutter:
     - assets/images/park.png
     - assets/images/yourloc.png
     - assets/images/
+
+
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/font/Inter-Regular.ttf

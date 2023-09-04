@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:parkirta/bloc/auth_bloc.dart';
 import 'package:parkirta/color.dart';
+import 'package:parkirta/ui/arrive_page.dart';
 import 'package:parkirta/ui/auth/login_page.dart';
 import 'package:parkirta/ui/auth/pre_login_page.dart';
 import 'package:parkirta/ui/auth/register_page.dart';
 import 'package:parkirta/ui/auth/splash_page.dart';
 import 'package:parkirta/ui/home_page.dart';
+import 'package:parkirta/ui/payment/payment_page.dart';
+import 'package:parkirta/ui/payment/payment_success_page.dart';
 import 'package:parkirta/utils/contsant/authentication.dart';
 import 'package:sp_util/sp_util.dart';
 void main() async {
@@ -50,11 +54,15 @@ class AppView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark));
 
     return MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Parkirta',
         theme: ThemeData(
+          fontFamily: 'Inter',
           primaryColor: Red50,
         ),
         initialRoute: "/",
@@ -64,6 +72,9 @@ class AppView extends StatelessWidget {
           '/register': (context) => RegisterPage(),
           '/pre_login': (context) => const PreLoginPage(),
           '/home': (context) => HomePage(),
+          '/arrive': (context) => ArrivePage(),
+          '/payment': (context) => PaymentPage(),
+          '/payment_success': (context) => PaymentSuccessPage(),
         }
     );
   }
