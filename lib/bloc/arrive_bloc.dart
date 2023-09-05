@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:parkirta/data/message/response/parking/parking_check_detail_response.dart';
 import 'package:parkirta/data/repository/parking_repository.dart';
 import 'package:parkirta/data/repository/payment_repository.dart';
@@ -38,15 +39,18 @@ class ArriveBloc extends Cubit<ArriveState> {
   }
 
   Future<void> paymentCheck(int retributionId, int payNow) async {
+    debugPrint("pay now $payNow");
     emit(LoadingState(true));
     final response =
     await _paymentRepository.paymentCheck(retributionId, payNow);
     emit(LoadingState(false));
-    if (response.success) {
-      emit(PaymentCheckSuccessState());
-    } else {
-      emit(ErrorState(error: response.message));
-    }
+    emit(PaymentCheckSuccessState(payNow: payNow));
+
+    // if (response.success) {
+    //   emit(PaymentCheckSuccessState(payNow: payNow));
+    // } else {
+    //   emit(ErrorState(error: response.message));
+    // }
   }
 
 
@@ -79,8 +83,8 @@ class  CancelParkingSuccessState extends ArriveState {
 }
 
 class PaymentCheckSuccessState extends ArriveState {
-  // final ParkingCheckDetail data;
-  // const PaymentCheckSuccessState({required this.data});
+  final int payNow;
+  const PaymentCheckSuccessState({required this.payNow});
 }
 
 // class PaymentEntrySuccessState extends ArriveState {

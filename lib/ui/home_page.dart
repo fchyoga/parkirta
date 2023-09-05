@@ -14,7 +14,9 @@ import 'package:parkirta/bloc/home_bloc.dart';
 import 'package:parkirta/color.dart';
 import 'package:parkirta/ui/api.dart';
 import 'package:parkirta/ui/profile.dart';
+import 'package:parkirta/utils/contsant/app_colors.dart';
 import 'package:parkirta/utils/contsant/transaction_const.dart';
+import 'package:parkirta/widget/dialog/parking_timer_dialog.dart';
 import 'package:parkirta/widget/loading_dialog.dart';
 import 'package:permission_handler/permission_handler.dart' as perm;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,18 +37,14 @@ class _HomePageState extends State<HomePage> {
   late GoogleMapController _mapController;
   List<dynamic> _parkingLocations = [];
   Set<Polyline> _polylines = {};
-
   Set<Marker> _myLocationMarker = {};
   LatLng _myLocation = LatLng(0, 0);
   Map<String, dynamic>? selectedLocation;
-
   PolylinePoints polylinePoints = PolylinePoints();
-
   bool _isLoading = true;
-
   Polyline _polyline = Polyline(polylineId: PolylineId('route'), points: []);
-
   loc.Location _location = loc.Location();
+  var paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
 
   @override
   void setState(fn) {
@@ -91,7 +89,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     Timer(const Duration(seconds: 1), (){
       var retributionActive = SpUtil.getInt(RETRIBUTION_ID_ACTIVE, defValue: null);
-      if(retributionActive!=null){
+      if(retributionActive!=null && paymentStep!=PAY_LATER){
         Navigator.pushNamed(
             _context,
             "/arrive"
@@ -276,44 +274,44 @@ class _HomePageState extends State<HomePage> {
                 builder: (context, state) {
                   _context = context;
                   return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Red500,
-        toolbarHeight: 84,
-        titleSpacing: 0,
-        automaticallyImplyLeading: false,
-        title: Row(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 24),
-              child: Image.asset(
-                'assets/images/logo-parkirta2.png',
-                height: 40,
-              ),
-            ),
-            const SizedBox(width: 16),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 24),
-            child: InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ProfilePage()),
-                );
-              },
-              child: const CircleAvatar(
-                backgroundImage: AssetImage('assets/images/profile.png'),
-                radius: 20,
-              ),
-            ),
-          ),
-        ],
-      ),
-      body:_buildMap(context),
-    ); 
+                    extendBodyBehindAppBar: true,
+                    appBar: AppBar(
+                      backgroundColor: Red500,
+                      toolbarHeight: 84,
+                      titleSpacing: 0,
+                      automaticallyImplyLeading: false,
+                      title: Row(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 24),
+                            child: Image.asset(
+                              'assets/images/logo-parkirta2.png',
+                              height: 40,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                        ],
+                      ),
+                      actions: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 24),
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => ProfilePage()),
+                              );
+                            },
+                            child: CircleAvatar(
+                              radius: 20,
+                              child: Image.asset('assets/images/profile.png'),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    body:_buildMap(context),
+                  );
                 })
         )
     );
@@ -326,6 +324,7 @@ class _HomePageState extends State<HomePage> {
     //   );
     // } else {
       return Stack(
+        alignment: Alignment.center,
         children: [
           Container(
             height: MediaQuery.of(context).size.height,
@@ -382,6 +381,33 @@ class _HomePageState extends State<HomePage> {
               child: Icon(Icons.cancel_rounded),
             ),
           ),
+          paymentStep == PAY_LATER ? Positioned(
+              bottom: 50,
+              child: InkWell(
+                child: Container(
+                  width: 150,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10)
+                  ),
+                  padding: EdgeInsets.all(15),
+                  child: Column(
+                    children: [
+                      Text("Waktu Parkir", style: TextStyle(color: AppColors.textPassive, fontSize: 12),),
+                      SizedBox(height: 10,),
+                      Text("10:30", style: TextStyle(color: AppColors.colorPrimary, fontSize: 28, fontWeight: FontWeight.bold),),
+                      SizedBox(height: 10,),
+                    ],
+                  ),
+                ),
+                onTap: (){
+                  showDialog(context: context, builder: (_) =>
+                      ParkingTimerDialog()
+                  );
+                },
+              )
+          ): Container()
         ],
       );
     // }

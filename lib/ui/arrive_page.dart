@@ -36,30 +36,6 @@ class _ArrivePageState extends State<ArrivePage> {
   bool payNow = false;
   String? timeSelected;
 
-  Future<void> cancelParking(String idLokasiParkir) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('token');
-    try {
-      var url = Uri.parse('https://parkirta.test/api/retribusi/parking/cancel');
-      var response = await http.post(
-        url,
-        headers: {'Authorization': 'Bearer $token'},
-        body: {'id_lokasi_parkir': idLokasiParkir},
-      );
-
-      if (response.statusCode == 200) {
-        Navigator.pop(context);
-        print('Parkir berhasil dibatalkan');
-      } else {
-        // Jika request gagal, tangani kesalahan
-        print('Gagal membatalkan parkir');
-      }
-    } catch (error) {
-      // Jika terjadi kesalahan saat melakukan request, tangani kesalahan
-      print('Terjadi kesalahan saat membatalkan parkir: $error');
-    }
-  }
-
   void _showCancelConfirmationDialog(BuildContext _context) {
     showDialog(
       context: context,
@@ -113,14 +89,20 @@ class _ArrivePageState extends State<ArrivePage> {
                   ];
                 });
               } else if (state is PaymentCheckSuccessState) {
-                Navigator.pushNamed(context, "/payment", arguments: {
-                  "retribusi": parkingCheckDetail?.retribusi,
-                  "jam": timeSelected
-                });
+                debugPrint("pay now ${state.payNow}");
+                if(state.payNow == PAY_NOW_CODE){
+                  Navigator.pushNamed(context, "/payment", arguments: {
+                    "retribusi": parkingCheckDetail?.retribusi,
+                    "jam": timeSelected
+                  });
+                }else{
+                  SpUtil.putString(PAYMENT_STEP, PAY_LATER);
+                  Navigator.of(context).pop();
+                }
               } else if (state is CancelParkingSuccessState) {
                 showTopSnackBar(
                   context,
-                  CustomSnackBar.success(
+                  const CustomSnackBar.success(
                     message: "Parkir berhasil dibatalkan",
                   ),
                 );
@@ -213,11 +195,11 @@ class _ArrivePageState extends State<ArrivePage> {
                             ),
                           ): Container(),
                           parkingCheckDetail?.retribusi.idJukir == null ? Container(
-                            constraints: const BoxConstraints(
-                              minHeight: 200
-                            ),
+                            color: Colors.white,
+                            height: 200,
                             alignment: Alignment.center,
                             child: const Column(
+                              mainAxisSize: MainAxisSize.min,
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
@@ -276,7 +258,7 @@ class _ArrivePageState extends State<ArrivePage> {
          ),
          const SizedBox(height: 50,),
          ButtonDefault(title: "Bayar Nanti", color: AppColors.greenLight, textColor: AppColors.green, onTap: (){
-           context.read<ArriveBloc>().paymentCheck(retributionId, 0);
+           context.read<ArriveBloc>().paymentCheck(retributionId, PAY_LATER_CODE);
          }),
          const SizedBox(height: 10,),
          ButtonDefault(title: "Bayar Sekarang", color: AppColors.green, onTap: (){
@@ -364,11 +346,12 @@ class _ArrivePageState extends State<ArrivePage> {
                ),
              );
            }else{
-             Navigator.pushNamed(context, "/payment", arguments: {
-               "retribusi": parkingCheckDetail?.retribusi,
-               "jam": timeSelected
-             });
-             // context.read<ArriveBloc>().paymentCheck(retributionId, 1);
+
+             context.read<ArriveBloc>().paymentCheck(retributionId, PAY_NOW_CODE);
+             // Navigator.pushNamed(context, "/payment", arguments: {
+             //   "retribusi": parkingCheckDetail?.retribusi,
+             //   "jam": timeSelected
+             // });
            }
          }),
        ],

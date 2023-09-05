@@ -62,6 +62,7 @@ class _PaymentPageState extends State<PaymentPage> {
                       backgroundColor: Colors.white,
                       appBar: AppBar(
                         elevation: 0,
+                        backgroundColor: Colors.white,
                         automaticallyImplyLeading: false,
                         centerTitle: true,
                         leading: InkWell(
