@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:parkirta/bloc/auth_bloc.dart';
@@ -18,6 +19,15 @@ class _LoginPageState extends State<LoginPage> {
   bool _isPasswordVisible = false;
   final _loadingDialog = LoadingDialog();
   late BuildContext _context;
+
+  @override
+  void initState() {
+    FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance; // Change here
+    _firebaseMessaging.getToken().then((token){
+      debugPrint("token is $token");
+    });
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
