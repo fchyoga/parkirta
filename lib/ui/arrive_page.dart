@@ -60,7 +60,7 @@ class _ArrivePageState extends State<ArrivePage> {
     }
   }
 
-  void _showCancelConfirmationDialog() {
+  void _showCancelConfirmationDialog(BuildContext _context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -72,7 +72,7 @@ class _ArrivePageState extends State<ArrivePage> {
               child: Text('Ya'),
               onPressed: () {
                 Navigator.of(context).pop();
-                cancelParking((parkingCheckDetail?.retribusi.lokasiParkir.id ?? 0).toString());
+                _context.read<ArriveBloc>().cancelParking((parkingCheckDetail?.retribusi.lokasiParkir.id ?? 0).toString());
               },
             ),
             TextButton(
@@ -117,6 +117,15 @@ class _ArrivePageState extends State<ArrivePage> {
                   "retribusi": parkingCheckDetail?.retribusi,
                   "jam": timeSelected
                 });
+              } else if (state is CancelParkingSuccessState) {
+                showTopSnackBar(
+                  context,
+                  CustomSnackBar.success(
+                    message: "Parkir berhasil dibatalkan",
+                  ),
+                );
+                SpUtil.remove(RETRIBUTION_ID_ACTIVE);
+                Navigator.of(context).pop();
               } else if (state is ErrorState) {
                 showTopSnackBar(
                   context,
@@ -139,7 +148,7 @@ class _ArrivePageState extends State<ArrivePage> {
                         centerTitle: true,
                         leading: InkWell(
                           onTap: () {
-                            _showCancelConfirmationDialog();
+                            _showCancelConfirmationDialog(context);
                           },
                           child: Container(
                             padding: EdgeInsets.all(8),

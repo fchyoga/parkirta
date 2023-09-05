@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter/cupertino.dart';
 import 'package:parkirta/data/endpoint.dart';
+import 'package:parkirta/data/message/response/general_response.dart';
 import 'package:parkirta/data/message/response/login_response.dart';
 import 'package:parkirta/data/message/response/parking/parking_check_detail_response.dart';
 import 'package:parkirta/data/message/response/parking/submit_arrive_response.dart';
@@ -53,6 +54,29 @@ class ParkingRepository {
     } catch (e, stackTrace) {
       debugPrintStack(label: e.toString(), stackTrace: stackTrace);
       return ParkingCheckDetailResponse( success: false, message:  e.toString());
+    }
+  }
+
+  Future<GeneralResponse> cancelParking(String locationId) async {
+    try {
+      Map<String, dynamic> data = {
+        'id_lokasi_parkir': locationId.toString()
+      };
+      var response = await http.post(
+          Uri.parse(Endpoint.urlCancelParking),
+          body: data,
+          headers: {'Authorization': 'Bearer $token'},
+      );
+      debugPrint("response ${data}");
+      debugPrint("response ${response.body}");
+      return response.statusCode == 200 || response.statusCode == 404 ? generalResponseFromJson(response.body)
+      : GeneralResponse( success: false, message: "Failed cancel parking");
+    } on HttpException catch(e, stackTrace){
+      debugPrintStack(label: e.toString(), stackTrace: stackTrace);
+      return GeneralResponse( success: false, message: e.message);
+    } catch (e, stackTrace) {
+      debugPrintStack(label: e.toString(), stackTrace: stackTrace);
+      return GeneralResponse( success: false, message:  e.toString());
     }
   }
 

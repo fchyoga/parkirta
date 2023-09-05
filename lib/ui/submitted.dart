@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parkirta/color.dart';
-import 'package:parkirta/ui/app.dart';
+import 'package:parkirta/ui/main_page.dart';
 
 class SubmittedPage extends StatefulWidget {
   @override
@@ -70,7 +70,7 @@ class _SubmittedPageState extends State<SubmittedPage> {
                       Navigator.of(context).pop();
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => MyApp()),
+                        MaterialPageRoute(builder: (context) => MainPage()),
                       );
                     },
                     style: ButtonStyle(

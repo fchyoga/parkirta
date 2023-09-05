@@ -25,6 +25,18 @@ class ArriveBloc extends Cubit<ArriveState> {
     }
   }
 
+  Future<void> cancelParking(String id) async {
+    emit(LoadingState(true));
+    final response =
+    await _parkingRepository.cancelParking(id);
+    emit(LoadingState(false));
+    if (response.success || response.message == "Data Tidak Ditemukan.") {
+      emit(CancelParkingSuccessState());
+    } else {
+      emit(ErrorState(error: response.message));
+    }
+  }
+
   Future<void> paymentCheck(int retributionId, int payNow) async {
     emit(LoadingState(true));
     final response =
@@ -61,6 +73,9 @@ class ArriveInitial extends ArriveState {
 class CheckDetailParkingSuccessState extends ArriveState {
   final ParkingCheckDetail data;
   const CheckDetailParkingSuccessState({required this.data});
+}
+
+class  CancelParkingSuccessState extends ArriveState {
 }
 
 class PaymentCheckSuccessState extends ArriveState {
