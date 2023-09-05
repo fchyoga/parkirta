@@ -89,8 +89,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
-    Timer(Duration(seconds: 1), (){
-      var retributionActive = SpUtil.getInt(RETRIBUTION_ID_ACTIVE);
+    Timer(const Duration(seconds: 1), (){
+      var retributionActive = SpUtil.getInt(RETRIBUTION_ID_ACTIVE, defValue: null);
       if(retributionActive!=null){
         Navigator.pushNamed(
             _context,

@@ -8,16 +8,12 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class MyApp extends StatefulWidget {
+class MainPage extends StatefulWidget {
   @override
-  State<MyApp> createState() => _MyAppState();
+  State<MainPage> createState() => _MainPageState();
 }
 
-void main() {
-  runApp(MyApp());
-}
-
-class _MyAppState extends State<MyApp> {
+class _MainPageState extends State<MainPage> {
   int _currentIndex = 0;
   HomePage? homePage;
   Map<String, dynamic> userData = {};
@@ -121,7 +117,7 @@ class _MyAppState extends State<MyApp> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => MyApp()),
+            MaterialPageRoute(builder: (context) => MainPage()),
           );
         },
         backgroundColor: Red500,

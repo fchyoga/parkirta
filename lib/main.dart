@@ -9,6 +9,7 @@ import 'package:parkirta/ui/auth/pre_login_page.dart';
 import 'package:parkirta/ui/auth/register_page.dart';
 import 'package:parkirta/ui/auth/splash_page.dart';
 import 'package:parkirta/ui/home_page.dart';
+import 'package:parkirta/ui/main_page.dart';
 import 'package:parkirta/ui/payment/payment_page.dart';
 import 'package:parkirta/ui/payment/payment_success_page.dart';
 import 'package:parkirta/utils/contsant/authentication.dart';
@@ -90,7 +91,7 @@ class AppRoute extends StatelessWidget {
             debugPrint("state change $state");
             switch (state) {
               case Authentication.Authenticated:
-                return HomePage();
+                return MainPage();
               case Authentication.Unauthenticated:
                 return LoginPage();
               default:
