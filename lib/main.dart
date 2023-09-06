@@ -25,10 +25,10 @@ void main() async {
   await SpUtil.getInstance();
   Bloc.observer = AppBlocObserver();
   await Firebase.initializeApp(options: const FirebaseOptions(
-    apiKey: 'AIzaSyD-v31D6wK51CfyAqnpPYWPSiUpl-E56v8',
-    appId: '1:970018001351:android:a81ed1a2e42ae607de09e2',
-    messagingSenderId: '970018001351',
-    projectId: 'biznet-d7234',
+    apiKey: 'AIzaSyCRlojuTRtBCNauwVM9a7nWvoeFpt_yUkA',
+    appId: '1:498872125018:android:3dec57b31c03211a363a63',
+    messagingSenderId: '498872125018',
+    projectId: 'parkirta',
   ));
   await setupFlutterNotifications();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
