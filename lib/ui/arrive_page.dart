@@ -1,19 +1,15 @@
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
-import 'package:parkirta/bloc/arrive_bloc.dart';
-import 'package:parkirta/data/message/response/parking/parking_check_detail_response.dart';
-import 'package:parkirta/color.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:http/http.dart' as http;
+import 'package:parkirta/bloc/arrive_bloc.dart';
+import 'package:parkirta/color.dart';
+import 'package:parkirta/data/message/response/parking/parking_check_detail_response.dart';
 import 'package:parkirta/utils/contsant/app_colors.dart';
 import 'package:parkirta/utils/contsant/transaction_const.dart';
 import 'package:parkirta/widget/button/button_default.dart';
 import 'package:parkirta/widget/loading_dialog.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sp_util/sp_util.dart';
 import 'package:top_snackbar_flutter/custom_snack_bar.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
@@ -48,7 +44,7 @@ class _ArrivePageState extends State<ArrivePage> {
               child: Text('Ya'),
               onPressed: () {
                 Navigator.of(context).pop();
-                _context.read<ArriveBloc>().cancelParking((parkingCheckDetail?.retribusi.lokasiParkir.id ?? 0).toString());
+                _context.read<ArriveBloc>().cancelParking((parkingCheckDetail?.retribusi.lokasiParkir?.id ?? 0).toString());
               },
             ),
             TextButton(
@@ -145,7 +141,7 @@ class _ArrivePageState extends State<ArrivePage> {
                           child: Column(
                             children: [
                               Text(
-                                parkingCheckDetail?.retribusi.lokasiParkir.namaLokasi ?? "",
+                                parkingCheckDetail?.retribusi.lokasiParkir?.namaLokasi ?? "",
                                 maxLines: 2,
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
@@ -155,7 +151,7 @@ class _ArrivePageState extends State<ArrivePage> {
                                 ),
                               ),
                               Text(
-                                parkingCheckDetail?.retribusi.lokasiParkir.alamatLokasi ?? "",
+                                parkingCheckDetail?.retribusi.lokasiParkir?.alamatLokasi ?? "",
                                 maxLines: 2,
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
@@ -321,8 +317,8 @@ class _ArrivePageState extends State<ArrivePage> {
                mainAxisSize: MainAxisSize.min,
                children: [
                  Text("Lokasi : ", style: TextStyle(color: AppColors.text)),
-                 Text(parkingCheckDetail!.retribusi.lokasiParkir.namaLokasi, style: TextStyle(color: AppColors.text, fontWeight: FontWeight.bold)),
-                 Text(parkingCheckDetail!.retribusi.lokasiParkir.alamatLokasi, style: TextStyle(color: AppColors.text)),
+                 Text(parkingCheckDetail!.retribusi.lokasiParkir?.namaLokasi ?? "-", style: TextStyle(color: AppColors.text, fontWeight: FontWeight.bold)),
+                 Text(parkingCheckDetail!.retribusi.lokasiParkir?.alamatLokasi ?? "-", style: TextStyle(color: AppColors.text)),
                ],
              ),
              SizedBox(width: 20,),
@@ -330,7 +326,7 @@ class _ArrivePageState extends State<ArrivePage> {
                crossAxisAlignment: CrossAxisAlignment.end,
                children: [
                  const Text("Tarif :", style: TextStyle(color: AppColors.text)),
-                 Text("Rp ${parkingCheckDetail!.retribusi.biayaParkir?.biayaParkir ?? 0}", style: TextStyle(color: AppColors.text, fontWeight: FontWeight.bold)),
+                 Text("Rp ${parkingCheckDetail!.retribusi.biayaParkir?.biayaParkir ?? 0}", style: const TextStyle(color: AppColors.text, fontWeight: FontWeight.bold)),
                ],
              )
 

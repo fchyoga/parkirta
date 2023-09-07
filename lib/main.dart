@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:parkirta/bloc/auth_bloc.dart';
 import 'package:parkirta/color.dart';
+import 'package:parkirta/data/model/retribusi.dart';
 import 'package:parkirta/ui/arrive_page.dart';
 import 'package:parkirta/ui/auth/login_page.dart';
 import 'package:parkirta/ui/auth/pre_login_page.dart';
@@ -23,6 +25,8 @@ import 'package:firebase_core/firebase_core.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SpUtil.getInstance();
+  await Hive.initFlutter();
+  Hive.registerAdapter(RetribusiAdapter());
   Bloc.observer = AppBlocObserver();
   await Firebase.initializeApp(options: const FirebaseOptions(
     apiKey: 'AIzaSyCRlojuTRtBCNauwVM9a7nWvoeFpt_yUkA',
@@ -32,7 +36,7 @@ void main() async {
   ));
   await setupFlutterNotifications();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  runApp(App());
+  runApp(const App());
 }
 
 /// Custom [BlocObserver] that observes all bloc and cubit state changes.

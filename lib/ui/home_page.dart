@@ -8,10 +8,12 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:http/http.dart' as http;
 import 'package:location/location.dart' as loc;
 import 'package:parkirta/bloc/home_bloc.dart';
 import 'package:parkirta/color.dart';
+import 'package:parkirta/data/model/retribusi.dart';
 import 'package:parkirta/ui/api.dart';
 import 'package:parkirta/ui/profile.dart';
 import 'package:parkirta/utils/contsant/app_colors.dart';
@@ -45,6 +47,7 @@ class _HomePageState extends State<HomePage> {
   Polyline _polyline = Polyline(polylineId: PolylineId('route'), points: []);
   loc.Location _location = loc.Location();
   var paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
+  Retribusi? retribution;
 
   @override
   void setState(fn) {
@@ -86,14 +89,20 @@ class _HomePageState extends State<HomePage> {
   late BitmapDescriptor myLocationIcon;
 
   @override
-  void initState() {
-    Timer(const Duration(seconds: 1), (){
+  void initState(){
+    Timer(const Duration(seconds: 1), () async{
+      getLocalData();
       var retributionActive = SpUtil.getInt(RETRIBUTION_ID_ACTIVE, defValue: null);
+      // if(retributionActive!=null){
       if(retributionActive!=null && paymentStep!=PAY_LATER){
-        Navigator.pushNamed(
+        await Navigator.pushNamed(
             _context,
             "/arrive"
         );
+        setState(() {
+          paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
+        });
+
       }
     });
     super.initState();
@@ -249,6 +258,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // getLocalData();
     return BlocProvider(
         create: (context) => HomeBloc(),
         child: BlocListener<HomeBloc, HomeState>(
@@ -396,7 +406,7 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       Text("Waktu Parkir", style: TextStyle(color: AppColors.textPassive, fontSize: 12),),
                       SizedBox(height: 10,),
-                      Text("10:30", style: TextStyle(color: AppColors.colorPrimary, fontSize: 28, fontWeight: FontWeight.bold),),
+                      Text((retribution?.createdAt ?? DateTime.now()).toIso8601String(), style: TextStyle(color: AppColors.colorPrimary, fontSize: 28, fontWeight: FontWeight.bold),),
                       SizedBox(height: 10,),
                     ],
                   ),
@@ -745,6 +755,15 @@ class _HomePageState extends State<HomePage> {
       _polylines.remove(_polyline);
       _polyline = Polyline(polylineId: PolylineId('route'), points: []);
     });
+  }
+
+  Future<void> getLocalData() async{
+    var retributions = await Hive.openBox<Retribusi>('retribusiBox');
+    if(retributions.isNotEmpty){
+      setState(() {
+        retribution = retributions.getAt(0);
+      });
+    }
   }
 
 }

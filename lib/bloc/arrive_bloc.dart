@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:parkirta/data/message/response/parking/parking_check_detail_response.dart';
+import 'package:parkirta/data/model/retribusi.dart';
 import 'package:parkirta/data/repository/parking_repository.dart';
 import 'package:parkirta/data/repository/payment_repository.dart';
 import 'package:parkirta/data/repository/user_repository.dart';
@@ -20,6 +22,9 @@ class ArriveBloc extends Cubit<ArriveState> {
     await _parkingRepository.checkDetailParking(id);
     emit(LoadingState(false));
     if (response.success) {
+      var retributions = await Hive.openBox<Retribusi>('retribusiBox');
+      retributions.put(0, response.data!.retribusi);
+
       emit(CheckDetailParkingSuccessState(data: response.data!));
     } else {
       emit(ErrorState(error: response.message));
