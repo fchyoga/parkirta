@@ -1,34 +1,47 @@
+
+import 'package:hive_flutter/adapters.dart';
+
+part 'member.g.dart';
+
+@HiveType(typeId: 1)
 class Member {
+    @HiveField(0)
     int id;
     dynamic fotoPelanggan;
+    @HiveField(1)
     String namaLengkap;
+    @HiveField(2)
     String nik;
     dynamic fotoKtp;
     dynamic tempatLahir;
     dynamic tglLahir;
     dynamic jenisKelamin;
     dynamic alamat;
+    @HiveField(3)
     String email;
+    @HiveField(4)
     int saldo;
+    @HiveField(5)
     String statusPelanggan;
+    @HiveField(6)
     DateTime createdAt;
-    DateTime updatedAt;
+    DateTime? updatedAt;
 
     Member({
         required this.id,
-        required this.fotoPelanggan,
+        this.fotoPelanggan,
         required this.namaLengkap,
         required this.nik,
-        required this.fotoKtp,
-        required this.tempatLahir,
-        required this.tglLahir,
-        required this.jenisKelamin,
-        required this.alamat,
+        this.fotoKtp,
+        this.tempatLahir,
+        this.tglLahir,
+        this.jenisKelamin,
+        this.alamat,
         required this.email,
         required this.saldo,
         required this.statusPelanggan,
         required this.createdAt,
-        required this.updatedAt,
+        this.updatedAt,
     });
 
     factory Member.fromJson(Map<String, dynamic> json) => Member(
@@ -45,7 +58,7 @@ class Member {
         saldo: json["saldo"],
         statusPelanggan: json["status_pelanggan"],
         createdAt: DateTime.parse(json["created_at"]),
-        updatedAt: DateTime.parse(json["updated_at"]),
+        updatedAt: json["updated_at"]!=null ? DateTime.parse(json["updated_at"]): null
     );
 
     Map<String, dynamic> toJson() => {
@@ -62,6 +75,6 @@ class Member {
         "saldo": saldo,
         "status_pelanggan": statusPelanggan,
         "created_at": createdAt.toIso8601String(),
-        "updated_at": updatedAt.toIso8601String(),
+        "updated_at": updatedAt?.toIso8601String(),
     };
 }

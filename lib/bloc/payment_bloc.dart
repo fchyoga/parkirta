@@ -18,7 +18,7 @@ class PaymentBloc extends Cubit<PaymentState> {
     await _paymentRepository.paymentEntry(retributionId, totalHours, viaJukir);
     emit(LoadingState(false));
     if (response.success) {
-      emit(PaymentEntrySuccessState());
+      emit(PaymentEntrySuccessState(viaJukir: viaJukir == 1));
     } else {
       emit(ErrorState(error: response.message));
     }
@@ -45,8 +45,8 @@ class ArriveInitial extends PaymentState {
 }
 
 class PaymentEntrySuccessState extends PaymentState {
-  // final ParkingCheckDetail data;
-  // const PaymentCheckSuccessState({required this.data});
+  final bool viaJukir;
+  const PaymentEntrySuccessState({required this.viaJukir});
 }
 
 class PaymentCheckoutSuccessState extends PaymentState {

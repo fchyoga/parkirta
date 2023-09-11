@@ -19,12 +19,13 @@ class _LoginPageState extends State<LoginPage> {
   bool _isPasswordVisible = false;
   final _loadingDialog = LoadingDialog();
   late BuildContext _context;
+  String deviceToken = "";
 
   @override
   void initState() {
     FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance; // Change here
     _firebaseMessaging.getToken().then((token){
-      debugPrint("token is $token");
+      deviceToken = token ?? "";
     });
     super.initState();
   }
@@ -167,7 +168,7 @@ class _LoginPageState extends State<LoginPage> {
                                         String password = _passwordController.text;
                                         if (email.isNotEmpty && password.isNotEmpty) {
                                           // _login('pelanggan', password);
-                                          context.read<LoginBloc>().doLogin(email, password);
+                                          context.read<LoginBloc>().doLogin(email, password, deviceToken);
                                         } else {
                                           showDialog(
                                             context: context,

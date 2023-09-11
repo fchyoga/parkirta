@@ -1,15 +1,27 @@
+
+import 'package:hive_flutter/adapters.dart';
+
+part 'lokasi_parkir.g.dart';
+
+@HiveType(typeId: 2)
 class LokasiParkir {
+    @HiveField(0)
     int id;
+    @HiveField(1)
     String namaLokasi;
+    @HiveField(2)
     String alamatLokasi;
+    @HiveField(3)
     String lat;
+    @HiveField(4)
     String long;
-    String areaLatlong;
-    String url;
-    String status;
-    String statusOperasional;
-    DateTime createdAt;
-    DateTime updatedAt;
+    @HiveField(5)
+    String? areaLatlong;
+    String? url;
+    String? status;
+    String? statusOperasional;
+    DateTime? createdAt;
+    DateTime? updatedAt;
 
     LokasiParkir({
         required this.id,
@@ -17,12 +29,12 @@ class LokasiParkir {
         required this.alamatLokasi,
         required this.lat,
         required this.long,
-        required this.areaLatlong,
-        required this.url,
-        required this.status,
-        required this.statusOperasional,
-        required this.createdAt,
-        required this.updatedAt,
+        this.areaLatlong,
+        this.url,
+        this.status,
+        this.statusOperasional,
+        this.createdAt,
+        this.updatedAt,
     });
 
     factory LokasiParkir.fromJson(Map<String, dynamic> json) => LokasiParkir(
@@ -35,8 +47,8 @@ class LokasiParkir {
         url: json["url"],
         status: json["status"],
         statusOperasional: json["status_operasional"],
-        createdAt: DateTime.parse(json["created_at"]),
-        updatedAt: DateTime.parse(json["updated_at"]),
+        createdAt: json["created_at"] != null ? DateTime.parse(json["created_at"]): null,
+        updatedAt: json["updated_at"] != null ? DateTime.parse(json["updated_at"]): null,
     );
 
     Map<String, dynamic> toJson() => {
@@ -49,7 +61,7 @@ class LokasiParkir {
         "url": url,
         "status": status,
         "status_operasional": statusOperasional,
-        "created_at": createdAt.toIso8601String(),
-        "updated_at": updatedAt.toIso8601String(),
+        "created_at": createdAt?.toIso8601String(),
+        "updated_at": updatedAt?.toIso8601String(),
     };
 }

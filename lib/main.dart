@@ -8,6 +8,9 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:parkirta/bloc/auth_bloc.dart';
 import 'package:parkirta/color.dart';
+import 'package:parkirta/data/model/biaya_parkir.dart';
+import 'package:parkirta/data/model/lokasi_parkir.dart';
+import 'package:parkirta/data/model/member.dart';
 import 'package:parkirta/data/model/retribusi.dart';
 import 'package:parkirta/ui/arrive_page.dart';
 import 'package:parkirta/ui/auth/login_page.dart';
@@ -27,6 +30,9 @@ void main() async {
   await SpUtil.getInstance();
   await Hive.initFlutter();
   Hive.registerAdapter(RetribusiAdapter());
+  Hive.registerAdapter(BiayaParkirAdapter());
+  Hive.registerAdapter(LokasiParkirAdapter());
+  Hive.registerAdapter(MemberAdapter());
   Bloc.observer = AppBlocObserver();
   await Firebase.initializeApp(options: const FirebaseOptions(
     apiKey: 'AIzaSyCRlojuTRtBCNauwVM9a7nWvoeFpt_yUkA',

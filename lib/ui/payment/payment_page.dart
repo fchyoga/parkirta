@@ -25,6 +25,7 @@ class _PaymentPageState extends State<PaymentPage> {
 
   final _loadingDialog = LoadingDialog();
   Retribusi? retribution;
+  Duration? duration;
 
 
   @override
@@ -32,6 +33,7 @@ class _PaymentPageState extends State<PaymentPage> {
     var args = ModalRoute.of(context)?.settings.arguments as Map;
     retribution = args["retribusi"];
     var time = args["jam"];
+    duration = args["durasi"];
     return BlocProvider(
         create: (context) => PaymentBloc(),
         child: BlocListener<PaymentBloc, PaymentState>(
@@ -39,7 +41,8 @@ class _PaymentPageState extends State<PaymentPage> {
               if (state is LoadingState) {
                 state.show ? _loadingDialog.show(context) : _loadingDialog.hide();
               // } else if (state is CheckDetailParkingSuccessState) {
-
+              } else if (state is PaymentEntrySuccessState) {
+                showBottomSheetWaiting(context);
               } else if (state is ErrorState) {
                 showTopSnackBar(
                   context,
@@ -114,7 +117,7 @@ class _PaymentPageState extends State<PaymentPage> {
                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                children: [
                  const Text("Waktu Parkir : ", style: TextStyle(fontWeight: FontWeight.normal)),
-                 Text(retribution!.lamaParkir ?? "-", style: const TextStyle(fontWeight: FontWeight.normal)),
+                 Text(getDurationString() ?? "-", style: const TextStyle(fontWeight: FontWeight.normal)),
                ],
              ),
                const SizedBox(height: 5),
@@ -131,7 +134,7 @@ class _PaymentPageState extends State<PaymentPage> {
                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                  children: [
                    const Text("Total : ", style: TextStyle(fontWeight: FontWeight.bold)),
-                   Text("Rp ${retribution!.subtotalBiaya ?? 0}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                   Text("Rp ${getTotalPrice() ?? 0}", style: const TextStyle(fontWeight: FontWeight.bold)),
                  ],
                ),
              ],
@@ -157,8 +160,9 @@ class _PaymentPageState extends State<PaymentPage> {
          ),
          const SizedBox(height: 10,),
          ButtonDefault(title: "Via Jukir", color: AppColors.greenLight, textColor: AppColors.green, onTap: (){
-           // context.read<PaymentBloc>().paymentEntry(retribution!.id, 0 , 1);
-           showBottomSheetWaiting(context);
+           var hour = duration==null ? 1: duration!.inMinutes.remainder(60) > 5 ? duration!.inHours + 1: duration!.inMinutes;
+           context.read<PaymentBloc>().paymentEntry(retribution!.id, hour , 1);
+           // showBottomSheetWaiting(context);
          }),
 
        ],
@@ -215,5 +219,24 @@ class _PaymentPageState extends State<PaymentPage> {
             ),
           );
         });
+  }
+
+  String? getDurationString(){
+    if(duration!=null){
+      var minutes = duration!.inMinutes.remainder(60) == 0 ? "01" :duration!.inMinutes.remainder(60).toString().padLeft(2, '0');
+      return "${duration!.inHours.toString().padLeft(2, '0')}:$minutes";
+    }else{
+      return null;
+    }
+  }
+
+  String? getTotalPrice(){
+    if(duration!=null && retribution?.biayaParkir?.biayaParkir !=null){
+
+      var hour = duration==null ? 1: duration!.inMinutes.remainder(60) > 5 ? duration!.inHours + 1: duration!.inMinutes;
+      return "${hour*retribution!.biayaParkir!.biayaParkir!}";
+    }else{
+      return null;
+    }
   }
 }

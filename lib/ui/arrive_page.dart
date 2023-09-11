@@ -31,6 +31,7 @@ class _ArrivePageState extends State<ArrivePage> {
   List<Marker> markers = [];
   bool payNow = false;
   String? timeSelected;
+  Duration? duration;
 
   void _showCancelConfirmationDialog(BuildContext _context) {
     showDialog(
@@ -89,7 +90,8 @@ class _ArrivePageState extends State<ArrivePage> {
                 if(state.payNow == PAY_NOW_CODE){
                   Navigator.pushNamed(context, "/payment", arguments: {
                     "retribusi": parkingCheckDetail?.retribusi,
-                    "jam": timeSelected
+                    "jam": timeSelected,
+                    "durasi": duration,
                   });
                 }else{
                   SpUtil.putString(PAYMENT_STEP, PAY_LATER);
@@ -299,8 +301,12 @@ class _ArrivePageState extends State<ArrivePage> {
            );
 
            if(pickedTime != null ){
+
+             final now = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, pickedTime.hour, pickedTime.minute);
+
              setState(() {
                timeSelected = "${pickedTime.hour}:${pickedTime.minute}";
+               duration = now.difference(parkingCheckDetail!.retribusi.createdAt);
              });
            }else{
              print("Time is not selected");

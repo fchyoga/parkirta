@@ -16,8 +16,8 @@ import 'package:parkirta/color.dart';
 import 'package:parkirta/data/model/retribusi.dart';
 import 'package:parkirta/ui/api.dart';
 import 'package:parkirta/ui/profile.dart';
-import 'package:parkirta/utils/contsant/app_colors.dart';
 import 'package:parkirta/utils/contsant/transaction_const.dart';
+import 'package:parkirta/widget/card/card_timer.dart';
 import 'package:parkirta/widget/dialog/parking_timer_dialog.dart';
 import 'package:parkirta/widget/loading_dialog.dart';
 import 'package:permission_handler/permission_handler.dart' as perm;
@@ -46,8 +46,9 @@ class _HomePageState extends State<HomePage> {
   bool _isLoading = true;
   Polyline _polyline = Polyline(polylineId: PolylineId('route'), points: []);
   loc.Location _location = loc.Location();
-  var paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
+  String? paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
   Retribusi? retribution;
+  DateTime? parkingTime;
 
   @override
   void setState(fn) {
@@ -92,6 +93,7 @@ class _HomePageState extends State<HomePage> {
   void initState(){
     Timer(const Duration(seconds: 1), () async{
       getLocalData();
+      // SpUtil.putInt(RETRIBUTION_ID_ACTIVE, 58);
       var retributionActive = SpUtil.getInt(RETRIBUTION_ID_ACTIVE, defValue: null);
       // if(retributionActive!=null){
       if(retributionActive!=null && paymentStep!=PAY_LATER){
@@ -260,17 +262,20 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     // getLocalData();
     return BlocProvider(
-        create: (context) => HomeBloc(),
+        create: (context) => HomeBloc()..initial,
         child: BlocListener<HomeBloc, HomeState>(
-            listener: (context, state) {
-              if (state is LoadingState) {
+            listener: (context, state) async{
+              if (state is Initial) {
+              }else if (state is LoadingState) {
                 state.show ? _loadingDialog.show(context) : _loadingDialog.hide();
-                } else if (state is SuccessSubmitArrivalState) {
+              } else if (state is SuccessSubmitArrivalState) {
                 SpUtil.putInt(RETRIBUTION_ID_ACTIVE, state.data.idRetribusiParkir);
-                Navigator.pushNamed(
+                await Navigator.pushNamed(
                     context,
                     "/arrive"
                 );
+                getLocalData();
+
               } else if (state is ErrorState) {
                 showTopSnackBar(
                   context,
@@ -320,108 +325,97 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ],
                     ),
-                    body:_buildMap(context),
+                    body: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height,
+                          child: GoogleMap(
+                            onMapCreated: _onMapCreated,
+                            zoomControlsEnabled: false,
+                            mapType: MapType.normal,
+                            initialCameraPosition: const CameraPosition(
+                              target: LatLng(-5.143648100120257, 119.48282708990482), // Ganti dengan posisi awal peta
+                              zoom: 20.0,
+                            ),
+                            markers: Set<Marker>.from(_parkingLocations.map((location) => Marker(
+                              markerId: MarkerId(location['id'].toString()),
+                              position: LatLng(
+                                double.parse(location['lat']),
+                                double.parse(location['long']),
+                              ),
+                              icon: defaultIcon,
+                              onTap: () {
+                                _showParkingLocationPopup(context, location);
+                              },
+                            ))).union(_myLocationMarker),
+                            polylines: _polylines,
+                            polygons: Set<Polygon>.from(_parkingLocations!.map((location) {
+                              List<String> areaLatLongStrings = location['area_latlong'].split('},{');
+                              List<LatLng> polygonCoordinates = areaLatLongStrings.map<LatLng>((areaLatLongString) {
+                                String latLngString = areaLatLongString.replaceAll('{', '').replaceAll('}', '');
+                                List<String> latLngList = latLngString.split(',');
+
+                                double lat = double.parse(latLngList[0].split(':')[1]);
+                                double lng = double.parse(latLngList[1].split(':')[1]);
+
+                                return LatLng(lat, lng);
+                              }).toList();
+
+                              return Polygon(
+                                polygonId: PolygonId(location['id'].toString()),
+                                points: polygonCoordinates,
+                                fillColor: Colors.blue.withOpacity(0.3),
+                                strokeColor: Colors.blue,
+                                strokeWidth: 2,
+                              );
+                            })),
+
+                          ),
+                        ),
+                        Positioned(
+                          top: 16.0,
+                          right: 16.0,
+                          child: FloatingActionButton(
+                            onPressed: () {
+                              _cancelRoute();
+                            },
+                            child: Icon(Icons.cancel_rounded),
+                          ),
+                        ),
+                        paymentStep == PAY_LATER && retribution!= null && parkingTime!= null ? Positioned(
+                            top: 136,
+                            right: 16,
+                            child: CardTimer(dateTime: parkingTime, onClick:  (value){
+                              showDialog(context: context, builder: (_) =>
+                                  ParkingTimerDialog(
+                                    entryDate: parkingTime!,
+                                    duration: value,
+                                    name: retribution!.pelanggan?.namaLengkap ?? "-",
+                                    policeNumber: retribution!.nopol ?? "-",
+                                    location: retribution!.lokasiParkir?.namaLokasi ?? "-",
+                                    address:retribution!.lokasiParkir?.alamatLokasi ?? "-",
+                                    price: (retribution!.biayaParkir?.biayaParkir ?? 0).toString(),
+                                    onClickStop: (){
+                                      Navigator.pushNamed(_context, "/payment", arguments: {
+                                        "retribusi": retribution,
+                                        "jam": parkingTime,
+                                        "durasi": DateTime.now().difference(parkingTime!)
+                                      });
+                                    },
+                                  )
+                              );
+                            })
+                        ): Container(),
+
+                      ],
+                    )
                   );
                 })
         )
     );
   }
 
-  Widget _buildMap(BuildContext context) {
-    // if ((_parkingLocations??[]).isEmpty) { // Periksa apakah _parkingLocations adalah null atau kosong
-    //   return const Center(
-    //     child: CircularProgressIndicator(),
-    //   );
-    // } else {
-      return Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            height: MediaQuery.of(context).size.height,
-            child: GoogleMap(
-              onMapCreated: _onMapCreated,
-
-              mapType: MapType.normal,
-              initialCameraPosition: const CameraPosition(
-                target: LatLng(-5.143648100120257, 119.48282708990482), // Ganti dengan posisi awal peta
-                zoom: 20.0,
-              ),
-              markers: Set<Marker>.from(_parkingLocations.map((location) => Marker(
-                markerId: MarkerId(location['id'].toString()),
-                position: LatLng(
-                  double.parse(location['lat']),
-                  double.parse(location['long']),
-                ),
-                icon: defaultIcon,
-                onTap: () {
-                  _showParkingLocationPopup(context, location);
-                },
-              ))).union(_myLocationMarker),
-              polylines: _polylines,
-              polygons: Set<Polygon>.from(_parkingLocations!.map((location) {
-                List<String> areaLatLongStrings = location['area_latlong'].split('},{');
-                List<LatLng> polygonCoordinates = areaLatLongStrings.map<LatLng>((areaLatLongString) {
-                  String latLngString = areaLatLongString.replaceAll('{', '').replaceAll('}', '');
-                  List<String> latLngList = latLngString.split(',');
-
-                  double lat = double.parse(latLngList[0].split(':')[1]);
-                  double lng = double.parse(latLngList[1].split(':')[1]);
-
-                  return LatLng(lat, lng);
-                }).toList();
-
-                return Polygon(
-                  polygonId: PolygonId(location['id'].toString()),
-                  points: polygonCoordinates,
-                  fillColor: Colors.blue.withOpacity(0.3),
-                  strokeColor: Colors.blue,
-                  strokeWidth: 2,
-                );
-              })),
-
-            ),
-          ),
-          Positioned(
-            top: 16.0,
-            right: 16.0,
-            child: FloatingActionButton(
-              onPressed: () {
-                _cancelRoute();
-              },
-              child: Icon(Icons.cancel_rounded),
-            ),
-          ),
-          paymentStep == PAY_LATER ? Positioned(
-              bottom: 50,
-              child: InkWell(
-                child: Container(
-                  width: 150,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10)
-                  ),
-                  padding: EdgeInsets.all(15),
-                  child: Column(
-                    children: [
-                      Text("Waktu Parkir", style: TextStyle(color: AppColors.textPassive, fontSize: 12),),
-                      SizedBox(height: 10,),
-                      Text((retribution?.createdAt ?? DateTime.now()).toIso8601String(), style: TextStyle(color: AppColors.colorPrimary, fontSize: 28, fontWeight: FontWeight.bold),),
-                      SizedBox(height: 10,),
-                    ],
-                  ),
-                ),
-                onTap: (){
-                  showDialog(context: context, builder: (_) =>
-                      ParkingTimerDialog()
-                  );
-                },
-              )
-          ): Container()
-        ],
-      );
-    // }
-  }
   
   void _showParkingLocationPopup(BuildContext _context, Map<String, dynamic> location) {
     debugPrint("_showParkingLocationPopup");
@@ -760,10 +754,13 @@ class _HomePageState extends State<HomePage> {
   Future<void> getLocalData() async{
     var retributions = await Hive.openBox<Retribusi>('retribusiBox');
     if(retributions.isNotEmpty){
-      setState(() {
-        retribution = retributions.getAt(0);
-      });
+      retribution = retributions.getAt(0);
+      parkingTime = retribution?.createdAt;
+      debugPrint("getLocalData $parkingTime ${retributions.getAt(0)?.toJson()}");
     }
+    setState(() {
+      paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
+    });
   }
 
 }

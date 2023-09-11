@@ -23,15 +23,19 @@ class RetribusiAdapter extends TypeAdapter<Retribusi> {
       idLokasiParkir: fields[3] as int,
       lat: fields[4] as String,
       long: fields[5] as String,
-      statusParkir: fields[6] as String,
-      createdAt: fields[7] as DateTime,
+      nopol: fields[6] as String?,
+      statusParkir: fields[7] as String,
+      createdAt: fields[8] as DateTime,
+      pelanggan: fields[9] as Member?,
+      lokasiParkir: fields[10] as LokasiParkir?,
+      biayaParkir: fields[11] as BiayaParkir?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Retribusi obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -45,9 +49,17 @@ class RetribusiAdapter extends TypeAdapter<Retribusi> {
       ..writeByte(5)
       ..write(obj.long)
       ..writeByte(6)
-      ..write(obj.statusParkir)
+      ..write(obj.nopol)
       ..writeByte(7)
-      ..write(obj.createdAt);
+      ..write(obj.statusParkir)
+      ..writeByte(8)
+      ..write(obj.createdAt)
+      ..writeByte(9)
+      ..write(obj.pelanggan)
+      ..writeByte(10)
+      ..write(obj.lokasiParkir)
+      ..writeByte(11)
+      ..write(obj.biayaParkir);
   }
 
   @override

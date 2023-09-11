@@ -30,23 +30,27 @@ class Retribusi {
     String long;
 
     dynamic jenisKendaraan;
-    dynamic nopol;
+    @HiveField(6)
+    String? nopol;
     dynamic lamaParkir;
     int? subtotalBiaya;
     dynamic isPayNow;
 
-    @HiveField(6)
+    @HiveField(7)
     String statusParkir;
     dynamic fotoKendaraan;
     dynamic fotoNopol;
 
 
-    @HiveField(7)
+    @HiveField(8)
     DateTime createdAt;
     DateTime? updatedAt;
+    @HiveField(9)
     Member? pelanggan;
     dynamic jukir;
+    @HiveField(10)
     LokasiParkir? lokasiParkir;
+    @HiveField(11)
     BiayaParkir? biayaParkir;
 
     Retribusi({
