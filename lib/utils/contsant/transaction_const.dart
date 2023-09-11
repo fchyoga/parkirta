@@ -10,4 +10,6 @@ const  PAY_VIA_JUKIR = "PAY_VIA_JUKIR";
 
 const  PAY_NOW_CODE = 1;
 const  PAY_LATER_CODE = 0;
+const  VIA_JUKIR_CODE = 1;
+const  NOT_VIA_JUKIR_CODE = 0;
 

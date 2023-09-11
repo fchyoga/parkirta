@@ -148,7 +148,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   //   iosBundleId: 'io.flutter.plugins.firebase.messaging',
   // ));
   // await setupFlutterNotifications();
-  // showFlutterNotification(message);
+  showFlutterNotification(message);
 
 
   // If you're going to use other Firebase services in the background, such as Firestore,

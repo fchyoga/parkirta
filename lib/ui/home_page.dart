@@ -95,8 +95,8 @@ class _HomePageState extends State<HomePage> {
       getLocalData();
       // SpUtil.putInt(RETRIBUTION_ID_ACTIVE, 58);
       var retributionActive = SpUtil.getInt(RETRIBUTION_ID_ACTIVE, defValue: null);
-      // if(retributionActive!=null){
-      if(retributionActive!=null && paymentStep!=PAY_LATER){
+      if(retributionActive!=null){
+      // if(retributionActive!=null && paymentStep!=PAY_LATER){
         await Navigator.pushNamed(
             _context,
             "/arrive"
@@ -400,7 +400,8 @@ class _HomePageState extends State<HomePage> {
                                       Navigator.pushNamed(_context, "/payment", arguments: {
                                         "retribusi": retribution,
                                         "jam": parkingTime,
-                                        "durasi": DateTime.now().difference(parkingTime!)
+                                        "durasi": DateTime.now().difference(parkingTime!),
+                                        PAYMENT_STEP: PAY_LATER
                                       });
                                     },
                                   )

@@ -92,6 +92,7 @@ class _ArrivePageState extends State<ArrivePage> {
                     "retribusi": parkingCheckDetail?.retribusi,
                     "jam": timeSelected,
                     "durasi": duration,
+                    PAYMENT_STEP: PAY_NOW
                   });
                 }else{
                   SpUtil.putString(PAYMENT_STEP, PAY_LATER);
@@ -303,7 +304,7 @@ class _ArrivePageState extends State<ArrivePage> {
            if(pickedTime != null ){
 
              final now = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, pickedTime.hour, pickedTime.minute);
-
+             print("Time is ${ pickedTime.hour}, ${pickedTime.minute} $now");
              setState(() {
                timeSelected = "${pickedTime.hour}:${pickedTime.minute}";
                duration = now.difference(parkingCheckDetail!.retribusi.createdAt);

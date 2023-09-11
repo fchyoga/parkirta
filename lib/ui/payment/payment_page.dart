@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screen_lock/flutter_screen_lock.dart';
 import 'package:parkirta/bloc/payment_bloc.dart';
 import 'package:parkirta/utils/contsant/app_colors.dart';
+import 'package:parkirta/utils/contsant/transaction_const.dart';
 import 'package:parkirta/widget/button/button_default.dart';
 import 'package:parkirta/widget/loading_dialog.dart';
 import 'package:top_snackbar_flutter/custom_snack_bar.dart';
@@ -26,6 +27,7 @@ class _PaymentPageState extends State<PaymentPage> {
   final _loadingDialog = LoadingDialog();
   Retribusi? retribution;
   Duration? duration;
+  String? paymentStep;
 
 
   @override
@@ -34,6 +36,7 @@ class _PaymentPageState extends State<PaymentPage> {
     retribution = args["retribusi"];
     var time = args["jam"];
     duration = args["durasi"];
+    paymentStep = args[PAYMENT_STEP];
     return BlocProvider(
         create: (context) => PaymentBloc(),
         child: BlocListener<PaymentBloc, PaymentState>(
@@ -42,7 +45,39 @@ class _PaymentPageState extends State<PaymentPage> {
                 state.show ? _loadingDialog.show(context) : _loadingDialog.hide();
               // } else if (state is CheckDetailParkingSuccessState) {
               } else if (state is PaymentEntrySuccessState) {
-                showBottomSheetWaiting(context);
+                if(!state.viaJukir) {
+                  screenLock(
+                    context: context,
+                    correctString: 'x' * 6,
+                    title: const Padding(padding: EdgeInsets.only(bottom: 10), child: Text("Enter PIN", style: TextStyle(fontSize: 16),),),
+                    onValidate: (value) async => await Future<bool>.delayed(
+                      const Duration(milliseconds: 500),
+                          () => true,
+                    ),
+                    onUnlocked: (){
+                      Navigator.of(context).pushNamed("/payment_success");
+                    }
+                  );
+                }else{
+                  showBottomSheetWaiting(context);
+                }
+              } else if (state is LeaveParkingSuccessState) {
+                if(!state.viaJukir) {
+                  screenLock(
+                      context: context,
+                      correctString: 'x' * 6,
+                      title: const Padding(padding: EdgeInsets.only(bottom: 10), child: Text("Enter PIN", style: TextStyle(fontSize: 16),),),
+                      onValidate: (value) async => await Future<bool>.delayed(
+                        const Duration(milliseconds: 500),
+                            () => true,
+                      ),
+                      onUnlocked: (){
+                        Navigator.of(context).pushNamed("/payment_success");
+                      }
+                  );
+                }else{
+                  showBottomSheetWaiting(context);
+                }
               } else if (state is ErrorState) {
                 showTopSnackBar(
                   context,
@@ -143,25 +178,38 @@ class _PaymentPageState extends State<PaymentPage> {
 
          const SizedBox(height: 80,),Text("Metode pembayaran", style: const TextStyle(fontWeight: FontWeight.bold)),
          const SizedBox(height: 10,),
-         ButtonDefault(title: "Bayar Sekarang", color: AppColors.green, onTap: () => screenLock(
-           context: context,
-           correctString: 'x' * 6,
-
-           title: const Padding(padding: EdgeInsets.only(bottom: 10), child: Text("Enter PIN", style: TextStyle(fontSize: 16),),),
-           onValidate: (value) async => await Future<bool>.delayed(
-             const Duration(milliseconds: 500),
-                 () => true,
-           ),
-           onUnlocked: (){
-             Navigator.of(context).pushNamed("/payment_success");
+         ButtonDefault(title: "Bayar Sekarang", color: AppColors.green, onTap: () {
+           if(paymentStep == PAY_NOW){
+             var hour = duration==null ? 1: duration!.inMinutes.remainder(60) > 5 ? duration!.inHours + 1: duration!.inMinutes;
+             context.read<PaymentBloc>().paymentEntry(retribution!.id, hour , NOT_VIA_JUKIR_CODE);
+           }else{
+             context.read<PaymentBloc>().leaveParking(retribution!.id, NOT_VIA_JUKIR_CODE);
            }
+    }
+           //   screenLock(
+           // context: context,
+           // correctString: 'x' * 6,
+           //
+           // title: const Padding(padding: EdgeInsets.only(bottom: 10), child: Text("Enter PIN", style: TextStyle(fontSize: 16),),),
+           // onValidate: (value) async => await Future<bool>.delayed(
+           //   const Duration(milliseconds: 500),
+           //       () => true,
+           // ),
+           // onUnlocked: (){
+           //   Navigator.of(context).pushNamed("/payment_success");
+           // }
 
-         ),
+         // ),
          ),
          const SizedBox(height: 10,),
          ButtonDefault(title: "Via Jukir", color: AppColors.greenLight, textColor: AppColors.green, onTap: (){
-           var hour = duration==null ? 1: duration!.inMinutes.remainder(60) > 5 ? duration!.inHours + 1: duration!.inMinutes;
-           context.read<PaymentBloc>().paymentEntry(retribution!.id, hour , 1);
+           if(paymentStep == PAY_NOW){
+
+             var hour = duration==null ? 1: duration!.inMinutes.remainder(60) > 5 ? duration!.inHours + 1: duration!.inMinutes;
+             context.read<PaymentBloc>().paymentEntry(retribution!.id, hour , VIA_JUKIR_CODE);
+           }else{
+             context.read<PaymentBloc>().leaveParking(retribution!.id, VIA_JUKIR_CODE);
+           }
            // showBottomSheetWaiting(context);
          }),
 
@@ -234,6 +282,7 @@ class _PaymentPageState extends State<PaymentPage> {
     if(duration!=null && retribution?.biayaParkir?.biayaParkir !=null){
 
       var hour = duration==null ? 1: duration!.inMinutes.remainder(60) > 5 ? duration!.inHours + 1: duration!.inMinutes;
+      debugPrint("cek hour $hour * ${retribution!.biayaParkir!.biayaParkir}");
       return "${hour*retribution!.biayaParkir!.biayaParkir!}";
     }else{
       return null;

@@ -30,9 +30,8 @@ class _CardTimerState extends State<CardTimer> {
   Widget build(BuildContext context) {
     return InkWell(
       child: Container(
-        width: 120,
         alignment: Alignment.center,
-        padding:  EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+        padding:  EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(10),
