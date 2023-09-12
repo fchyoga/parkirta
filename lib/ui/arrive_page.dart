@@ -303,11 +303,15 @@ class _ArrivePageState extends State<ArrivePage> {
 
            if(pickedTime != null ){
 
-             final now = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, pickedTime.hour, pickedTime.minute);
-             print("Time is ${ pickedTime.hour}, ${pickedTime.minute} $now");
+             var now = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, pickedTime.hour, pickedTime.minute);
+             if( DateTime.now().hour> pickedTime.hour){
+               now = now.add(Duration(days: 1));
+             }
+             print("Time is ${ pickedTime.hour}, ${pickedTime.minute} $now ${parkingCheckDetail!.retribusi.createdAt}");
              setState(() {
                timeSelected = "${pickedTime.hour}:${pickedTime.minute}";
                duration = now.difference(parkingCheckDetail!.retribusi.createdAt);
+               print("duration is ${ duration?.inHours.toString()},${ duration?.inMinutes.remainder(60).toString()}");
              });
            }else{
              print("Time is not selected");

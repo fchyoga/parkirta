@@ -180,7 +180,7 @@ class _PaymentPageState extends State<PaymentPage> {
          const SizedBox(height: 10,),
          ButtonDefault(title: "Bayar Sekarang", color: AppColors.green, onTap: () {
            if(paymentStep == PAY_NOW){
-             var hour = duration==null ? 1: duration!.inMinutes.remainder(60) > 5 ? duration!.inHours + 1: duration!.inMinutes;
+             var hour = duration==null ? 1: duration!.inMinutes.remainder(60) > 5 ? duration!.inHours + 1: duration!.inHours;
              context.read<PaymentBloc>().paymentEntry(retribution!.id, hour , NOT_VIA_JUKIR_CODE);
            }else{
              context.read<PaymentBloc>().leaveParking(retribution!.id, NOT_VIA_JUKIR_CODE);
@@ -205,7 +205,7 @@ class _PaymentPageState extends State<PaymentPage> {
          ButtonDefault(title: "Via Jukir", color: AppColors.greenLight, textColor: AppColors.green, onTap: (){
            if(paymentStep == PAY_NOW){
 
-             var hour = duration==null ? 1: duration!.inMinutes.remainder(60) > 5 ? duration!.inHours + 1: duration!.inMinutes;
+             var hour = duration==null ? 1: duration!.inMinutes.remainder(60) > 5 ? duration!.inHours + 1: duration!.inHours;
              context.read<PaymentBloc>().paymentEntry(retribution!.id, hour , VIA_JUKIR_CODE);
            }else{
              context.read<PaymentBloc>().leaveParking(retribution!.id, VIA_JUKIR_CODE);
@@ -272,7 +272,7 @@ class _PaymentPageState extends State<PaymentPage> {
   String? getDurationString(){
     if(duration!=null){
       var minutes = duration!.inMinutes.remainder(60) == 0 ? "01" :duration!.inMinutes.remainder(60).toString().padLeft(2, '0');
-      return "${duration!.inHours.toString().padLeft(2, '0')}:$minutes";
+      return "${duration!.inHours}:$minutes";
     }else{
       return null;
     }
