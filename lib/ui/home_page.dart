@@ -8,13 +8,17 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:http/http.dart' as http;
 import 'package:location/location.dart' as loc;
 import 'package:parkirta/bloc/home_bloc.dart';
 import 'package:parkirta/color.dart';
+import 'package:parkirta/data/model/retribusi.dart';
 import 'package:parkirta/ui/api.dart';
 import 'package:parkirta/ui/profile.dart';
 import 'package:parkirta/utils/contsant/transaction_const.dart';
+import 'package:parkirta/widget/card/card_timer.dart';
+import 'package:parkirta/widget/dialog/parking_timer_dialog.dart';
 import 'package:parkirta/widget/loading_dialog.dart';
 import 'package:permission_handler/permission_handler.dart' as perm;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,18 +39,16 @@ class _HomePageState extends State<HomePage> {
   late GoogleMapController _mapController;
   List<dynamic> _parkingLocations = [];
   Set<Polyline> _polylines = {};
-
   Set<Marker> _myLocationMarker = {};
   LatLng _myLocation = LatLng(0, 0);
   Map<String, dynamic>? selectedLocation;
-
   PolylinePoints polylinePoints = PolylinePoints();
-
   bool _isLoading = true;
-
   Polyline _polyline = Polyline(polylineId: PolylineId('route'), points: []);
-
   loc.Location _location = loc.Location();
+  String? paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
+  Retribusi? retribution;
+  DateTime? parkingTime;
 
   @override
   void setState(fn) {
@@ -88,14 +90,21 @@ class _HomePageState extends State<HomePage> {
   late BitmapDescriptor myLocationIcon;
 
   @override
-  void initState() {
-    Timer(const Duration(seconds: 1), (){
+  void initState(){
+    Timer(const Duration(seconds: 1), () async{
+      getLocalData();
+      // SpUtil.putInt(RETRIBUTION_ID_ACTIVE, 58);
       var retributionActive = SpUtil.getInt(RETRIBUTION_ID_ACTIVE, defValue: null);
       if(retributionActive!=null){
-        Navigator.pushNamed(
+      // if(retributionActive!=null && paymentStep!=PAY_LATER){
+        await Navigator.pushNamed(
             _context,
             "/arrive"
         );
+        setState(() {
+          paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
+        });
+
       }
     });
     super.initState();
@@ -251,18 +260,22 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // getLocalData();
     return BlocProvider(
-        create: (context) => HomeBloc(),
+        create: (context) => HomeBloc()..initial,
         child: BlocListener<HomeBloc, HomeState>(
-            listener: (context, state) {
-              if (state is LoadingState) {
+            listener: (context, state) async{
+              if (state is Initial) {
+              }else if (state is LoadingState) {
                 state.show ? _loadingDialog.show(context) : _loadingDialog.hide();
-                } else if (state is SuccessSubmitArrivalState) {
+              } else if (state is SuccessSubmitArrivalState) {
                 SpUtil.putInt(RETRIBUTION_ID_ACTIVE, state.data.idRetribusiParkir);
-                Navigator.pushNamed(
+                await Navigator.pushNamed(
                     context,
                     "/arrive"
                 );
+                getLocalData();
+
               } else if (state is ErrorState) {
                 showTopSnackBar(
                   context,
@@ -276,116 +289,134 @@ class _HomePageState extends State<HomePage> {
                 builder: (context, state) {
                   _context = context;
                   return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Red500,
-        toolbarHeight: 84,
-        titleSpacing: 0,
-        automaticallyImplyLeading: false,
-        title: Row(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 24),
-              child: Image.asset(
-                'assets/images/logo-parkirta2.png',
-                height: 40,
-              ),
-            ),
-            const SizedBox(width: 16),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 24),
-            child: InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ProfilePage()),
-                );
-              },
-              child: const CircleAvatar(
-                backgroundImage: AssetImage('assets/images/profile.png'),
-                radius: 20,
-              ),
-            ),
-          ),
-        ],
-      ),
-      body:_buildMap(context),
-    ); 
+                    extendBodyBehindAppBar: true,
+                    appBar: AppBar(
+                      backgroundColor: Red500,
+                      toolbarHeight: 84,
+                      titleSpacing: 0,
+                      automaticallyImplyLeading: false,
+                      title: Row(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 24),
+                            child: Image.asset(
+                              'assets/images/logo-parkirta2.png',
+                              height: 40,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                        ],
+                      ),
+                      actions: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 24),
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => ProfilePage()),
+                              );
+                            },
+                            child: CircleAvatar(
+                              radius: 20,
+                              child: Image.asset('assets/images/profile.png'),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    body: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height,
+                          child: GoogleMap(
+                            onMapCreated: _onMapCreated,
+                            zoomControlsEnabled: false,
+                            mapType: MapType.normal,
+                            initialCameraPosition: const CameraPosition(
+                              target: LatLng(-5.143648100120257, 119.48282708990482), // Ganti dengan posisi awal peta
+                              zoom: 20.0,
+                            ),
+                            markers: Set<Marker>.from(_parkingLocations.map((location) => Marker(
+                              markerId: MarkerId(location['id'].toString()),
+                              position: LatLng(
+                                double.parse(location['lat']),
+                                double.parse(location['long']),
+                              ),
+                              icon: defaultIcon,
+                              onTap: () {
+                                _showParkingLocationPopup(context, location);
+                              },
+                            ))).union(_myLocationMarker),
+                            polylines: _polylines,
+                            polygons: Set<Polygon>.from(_parkingLocations!.map((location) {
+                              List<String> areaLatLongStrings = location['area_latlong'].split('},{');
+                              List<LatLng> polygonCoordinates = areaLatLongStrings.map<LatLng>((areaLatLongString) {
+                                String latLngString = areaLatLongString.replaceAll('{', '').replaceAll('}', '');
+                                List<String> latLngList = latLngString.split(',');
+
+                                double lat = double.parse(latLngList[0].split(':')[1]);
+                                double lng = double.parse(latLngList[1].split(':')[1]);
+
+                                return LatLng(lat, lng);
+                              }).toList();
+
+                              return Polygon(
+                                polygonId: PolygonId(location['id'].toString()),
+                                points: polygonCoordinates,
+                                fillColor: Colors.blue.withOpacity(0.3),
+                                strokeColor: Colors.blue,
+                                strokeWidth: 2,
+                              );
+                            })),
+
+                          ),
+                        ),
+                        Positioned(
+                          top: 16.0,
+                          right: 16.0,
+                          child: FloatingActionButton(
+                            onPressed: () {
+                              _cancelRoute();
+                            },
+                            child: Icon(Icons.cancel_rounded),
+                          ),
+                        ),
+                        paymentStep == PAY_LATER && retribution!= null && parkingTime!= null ? Positioned(
+                            top: 136,
+                            right: 16,
+                            child: CardTimer(dateTime: parkingTime, onClick:  (value){
+                              showDialog(context: context, builder: (_) =>
+                                  ParkingTimerDialog(
+                                    entryDate: parkingTime!,
+                                    duration: value,
+                                    name: retribution!.pelanggan?.namaLengkap ?? "-",
+                                    policeNumber: retribution!.nopol ?? "-",
+                                    location: retribution!.lokasiParkir?.namaLokasi ?? "-",
+                                    address:retribution!.lokasiParkir?.alamatLokasi ?? "-",
+                                    price: (retribution!.biayaParkir?.biayaParkir ?? 0).toString(),
+                                    onClickStop: (){
+                                      Navigator.pushNamed(_context, "/payment", arguments: {
+                                        "retribusi": retribution,
+                                        "jam": parkingTime,
+                                        "durasi": DateTime.now().difference(parkingTime!),
+                                        PAYMENT_STEP: PAY_LATER
+                                      });
+                                    },
+                                  )
+                              );
+                            })
+                        ): Container(),
+
+                      ],
+                    )
+                  );
                 })
         )
     );
   }
 
-  Widget _buildMap(BuildContext context) {
-    // if ((_parkingLocations??[]).isEmpty) { // Periksa apakah _parkingLocations adalah null atau kosong
-    //   return const Center(
-    //     child: CircularProgressIndicator(),
-    //   );
-    // } else {
-      return Stack(
-        children: [
-          Container(
-            height: MediaQuery.of(context).size.height,
-            child: GoogleMap(
-              onMapCreated: _onMapCreated,
-
-              mapType: MapType.normal,
-              initialCameraPosition: const CameraPosition(
-                target: LatLng(-5.143648100120257, 119.48282708990482), // Ganti dengan posisi awal peta
-                zoom: 20.0,
-              ),
-              markers: Set<Marker>.from(_parkingLocations.map((location) => Marker(
-                markerId: MarkerId(location['id'].toString()),
-                position: LatLng(
-                  double.parse(location['lat']),
-                  double.parse(location['long']),
-                ),
-                icon: defaultIcon,
-                onTap: () {
-                  _showParkingLocationPopup(context, location);
-                },
-              ))).union(_myLocationMarker),
-              polylines: _polylines,
-              polygons: Set<Polygon>.from(_parkingLocations!.map((location) {
-                List<String> areaLatLongStrings = location['area_latlong'].split('},{');
-                List<LatLng> polygonCoordinates = areaLatLongStrings.map<LatLng>((areaLatLongString) {
-                  String latLngString = areaLatLongString.replaceAll('{', '').replaceAll('}', '');
-                  List<String> latLngList = latLngString.split(',');
-
-                  double lat = double.parse(latLngList[0].split(':')[1]);
-                  double lng = double.parse(latLngList[1].split(':')[1]);
-
-                  return LatLng(lat, lng);
-                }).toList();
-
-                return Polygon(
-                  polygonId: PolygonId(location['id'].toString()),
-                  points: polygonCoordinates,
-                  fillColor: Colors.blue.withOpacity(0.3),
-                  strokeColor: Colors.blue,
-                  strokeWidth: 2,
-                );
-              })),
-
-            ),
-          ),
-          Positioned(
-            top: 16.0,
-            right: 16.0,
-            child: FloatingActionButton(
-              onPressed: () {
-                _cancelRoute();
-              },
-              child: Icon(Icons.cancel_rounded),
-            ),
-          ),
-        ],
-      );
-    // }
-  }
   
   void _showParkingLocationPopup(BuildContext _context, Map<String, dynamic> location) {
     debugPrint("_showParkingLocationPopup");
@@ -718,6 +749,18 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _polylines.remove(_polyline);
       _polyline = Polyline(polylineId: PolylineId('route'), points: []);
+    });
+  }
+
+  Future<void> getLocalData() async{
+    var retributions = await Hive.openBox<Retribusi>('retribusiBox');
+    if(retributions.isNotEmpty){
+      retribution = retributions.getAt(0);
+      parkingTime = retribution?.createdAt;
+      debugPrint("getLocalData $parkingTime ${retributions.getAt(0)?.toJson()}");
+    }
+    setState(() {
+      paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
     });
   }
 

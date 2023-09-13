@@ -40,18 +40,19 @@ class PaymentRepository {
   Future<GeneralResponse> paymentEntry(int retributionId, int totalHours, int viaJukir) async {
     try {
       Map<String, dynamic> data = {
-        'id_retribusi_parkir': retributionId,
-        'jumlah_jam': totalHours,
-        'is_via_jukir': viaJukir
+        'id_retribusi_parkir': retributionId.toString(),
+        'jumlah_jam': totalHours.toString(),
+        'is_via_jukir': viaJukir.toString()
       };
       var response = await http.post(
           Uri.parse(Endpoint.urlPaymentEntry),
           body: data,
           headers: {'Authorization': 'Bearer $token'},
       );
+      debugPrint("request $data");
       debugPrint("response ${response.body}");
       return response.statusCode == 200 ? generalResponseFromJson(response.body)
-      : GeneralResponse( success: false, message: "Failed submit payment check");
+      : generalResponseFromJson(response.body);
     } on HttpException catch(e, stackTrace){
       debugPrintStack(label: e.toString(), stackTrace: stackTrace);
       return GeneralResponse( success: false, message: e.message);

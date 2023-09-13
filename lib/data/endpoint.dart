@@ -10,6 +10,7 @@ class Endpoint {
   static const String urlArrival= '${_baseUrl}retribusi/parking/arrive';
   static const String urlCheckDetailParking= '${_baseUrl}retribusi/parking/check/detail';
   static const String urlCancelParking= '${_baseUrl}retribusi/parking/cancel';
+  static const String urlLeaveParking= '${_baseUrl}retribusi/parking/leave';
   static const String urlPaymentCheck= '${_baseUrl}retribusi/payment/choice';
   static const String urlPaymentEntry= '${_baseUrl}retribusi/payment/entry';
   static const String urlPaymentCheckout= '${_baseUrl}retribusi/payment/checkout';

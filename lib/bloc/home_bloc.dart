@@ -11,6 +11,10 @@ class HomeBloc extends Cubit<HomeState> {
 
   HomeBloc() : super(Initial());
 
+  void initial(){
+    emit(Initial());
+  }
+
   Future<void> submitArrival(String locationId, String userId, String lat, String lng) async {
     emit(LoadingState(true));
     final response =

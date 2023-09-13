@@ -4,11 +4,13 @@ import 'package:parkirta/data/message/response/parking/parking_check_detail_resp
 import 'package:parkirta/data/repository/parking_repository.dart';
 import 'package:parkirta/data/repository/payment_repository.dart';
 import 'package:parkirta/data/repository/user_repository.dart';
+import 'package:parkirta/utils/contsant/transaction_const.dart';
 import 'package:parkirta/utils/contsant/user_const.dart';
 import 'package:sp_util/sp_util.dart';
 
 class PaymentBloc extends Cubit<PaymentState> {
   PaymentRepository _paymentRepository = PaymentRepository();
+  ParkingRepository _parkingRepository = ParkingRepository();
 
   PaymentBloc() : super(ArriveInitial());
 
@@ -18,7 +20,7 @@ class PaymentBloc extends Cubit<PaymentState> {
     await _paymentRepository.paymentEntry(retributionId, totalHours, viaJukir);
     emit(LoadingState(false));
     if (response.success) {
-      emit(PaymentEntrySuccessState());
+      emit(PaymentEntrySuccessState(viaJukir: viaJukir == VIA_JUKIR_CODE));
     } else {
       emit(ErrorState(error: response.message));
     }
@@ -35,6 +37,18 @@ class PaymentBloc extends Cubit<PaymentState> {
       emit(ErrorState(error: response.message));
     }
   }
+
+  Future<void> leaveParking(int id, int viaJukir) async {
+    emit(LoadingState(true));
+    final response =
+    await _parkingRepository.leaveParking(id, viaJukir);
+    emit(LoadingState(false));
+    if (response.success) {
+      emit(LeaveParkingSuccessState(viaJukir: viaJukir == VIA_JUKIR_CODE));
+    } else {
+      emit(ErrorState(error: response.message));
+    }
+  }
 }
 
 abstract class PaymentState {
@@ -44,9 +58,15 @@ abstract class PaymentState {
 class ArriveInitial extends PaymentState {
 }
 
+class LeaveParkingSuccessState extends PaymentState {
+  final bool viaJukir;
+  const LeaveParkingSuccessState({required this.viaJukir});
+}
+
+
 class PaymentEntrySuccessState extends PaymentState {
-  // final ParkingCheckDetail data;
-  // const PaymentCheckSuccessState({required this.data});
+  final bool viaJukir;
+  const PaymentEntrySuccessState({required this.viaJukir});
 }
 
 class PaymentCheckoutSuccessState extends PaymentState {
