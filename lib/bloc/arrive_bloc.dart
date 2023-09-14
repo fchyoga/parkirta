@@ -43,11 +43,11 @@ class ArriveBloc extends Cubit<ArriveState> {
     }
   }
 
-  Future<void> paymentCheck(int retributionId, int payNow) async {
+  Future<void> paymentChoice(int retributionId, int payNow) async {
     debugPrint("pay now $payNow");
     emit(LoadingState(true));
     final response =
-    await _paymentRepository.paymentCheck(retributionId, payNow);
+    await _paymentRepository.paymentChoice(retributionId, payNow);
     emit(LoadingState(false));
     emit(PaymentCheckSuccessState(payNow: payNow));
 
