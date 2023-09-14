@@ -22,8 +22,11 @@ import 'package:parkirta/ui/main_page.dart';
 import 'package:parkirta/ui/payment/payment_page.dart';
 import 'package:parkirta/ui/payment/payment_success_page.dart';
 import 'package:parkirta/utils/contsant/authentication.dart';
+import 'package:parkirta/utils/contsant/transaction_const.dart';
 import 'package:sp_util/sp_util.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:top_snackbar_flutter/custom_snack_bar.dart';
+import 'package:top_snackbar_flutter/top_snack_bar.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -73,9 +76,34 @@ class App extends StatelessWidget {
   }
 }
 
-class AppView extends StatelessWidget {
+class AppView extends StatefulWidget {
 
   const AppView({Key? key}) : super(key: key);
+
+
+  @override
+  State<AppView> createState() => _MainAppState();
+}
+
+class _MainAppState extends State<AppView> {
+
+  @override
+  void initState() {
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message){
+      print("masuk di dalam");
+
+      String? topicKey = message.data["topic_key"];
+      print("masuk di dalam $topicKey");
+      if(topicKey == PARKING_ACCEPTED){
+        Navigator.pushReplacementNamed(NavigationService.navigatorKey.currentContext!,'/arrive', arguments: int.tryParse(message.data["id"]));
+      }else if(topicKey == "payment_entry"){
+        Navigator.pushNamed(NavigationService.navigatorKey.currentContext!,'/detail_parking', arguments: int.tryParse(message.data["id"]));
+      }
+
+    });
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -125,6 +153,11 @@ class AppRoute extends StatelessWidget {
     );
 
   }
+}
+
+
+class NavigationService {
+  static GlobalKey<ScaffoldState> navigatorKey = GlobalKey<ScaffoldState>();
 }
 
 

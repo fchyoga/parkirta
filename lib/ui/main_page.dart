@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:parkirta/color.dart';
+import 'package:parkirta/main.dart';
 import 'package:parkirta/ui/wallet.dart';
 import 'package:parkirta/ui/dompet.dart';
 import 'package:parkirta/ui/home_page.dart';
@@ -63,6 +64,7 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: NavigationService.navigatorKey,
       body: _pages[_currentIndex],
       bottomNavigationBar: Container(
         color: Colors.white,

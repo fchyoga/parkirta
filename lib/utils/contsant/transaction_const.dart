@@ -13,3 +13,6 @@ const  PAY_LATER_CODE = 0;
 const  VIA_JUKIR_CODE = 1;
 const  NOT_VIA_JUKIR_CODE = 0;
 
+const PARKING_ACCEPTED = "parking_accepted";
+const PAYMENT_COMPLETE = "payment_complete";
+

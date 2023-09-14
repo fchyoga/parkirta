@@ -99,7 +99,8 @@ class _HomePageState extends State<HomePage> {
       // if(retributionActive!=null && paymentStep!=PAY_LATER){
         await Navigator.pushNamed(
             _context,
-            "/arrive"
+            "/arrive",
+          arguments: retributionActive
         );
         setState(() {
           paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
@@ -107,6 +108,8 @@ class _HomePageState extends State<HomePage> {
 
       }
     });
+
+    _loadParkIcon();
     super.initState();
   }
 
@@ -253,7 +256,6 @@ class _HomePageState extends State<HomePage> {
       }
     });
 
-    _loadParkIcon();
     _fetchParkingLocations();
     _getUserLocation();
   }
@@ -272,7 +274,8 @@ class _HomePageState extends State<HomePage> {
                 SpUtil.putInt(RETRIBUTION_ID_ACTIVE, state.data.idRetribusiParkir);
                 await Navigator.pushNamed(
                     context,
-                    "/arrive"
+                    "/arrive",
+                  arguments: state.data.idRetribusiParkir
                 );
                 getLocalData();
 

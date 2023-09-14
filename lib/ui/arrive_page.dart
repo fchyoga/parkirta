@@ -1,4 +1,6 @@
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -26,44 +28,31 @@ class ArrivePage extends StatefulWidget {
 class _ArrivePageState extends State<ArrivePage> {
 
   final _loadingDialog = LoadingDialog();
+  late BuildContext _context;
   late int retributionId;
   ParkingCheckDetail? parkingCheckDetail;
   List<Marker> markers = [];
   bool payNow = false;
   String? timeSelected;
   Duration? duration;
+  // late Timer periodic;
 
-  void _showCancelConfirmationDialog(BuildContext _context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Batalkan Parkir'),
-          content: Text('Anda yakin ingin membatalkan parkir?'),
-          actions: [
-            TextButton(
-              child: Text('Ya'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _context.read<ArriveBloc>().cancelParking((parkingCheckDetail?.retribusi.lokasiParkir?.id ?? 0).toString());
-              },
-            ),
-            TextButton(
-              child: Text('Tidak'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
+  @override
+  void initState() {
+    // periodic = Timer.periodic(Duration(seconds: 1), (timer) {
+    //   var parkingCheck = SpUtil.getString(PARKING_ACCEPTED);
+    //   if(parkingCheck == retributionId.toString()){
+    //     SpUtil.remove(PARKING_ACCEPTED);
+    //     _context.read<ArriveBloc>().checkDetailParking(retributionId.toString());
+    //   }
+    // });
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    retributionId = SpUtil.getInt(RETRIBUTION_ID_ACTIVE) ?? 0;
-    
+    var retributionId = ModalRoute.of(context)?.settings.arguments as int;
+
     return BlocProvider(
         create: (context) => ArriveBloc()..checkDetailParking(retributionId.toString()),
         child: BlocListener<ArriveBloc, ArriveState>(
@@ -118,6 +107,7 @@ class _ArrivePageState extends State<ArrivePage> {
             },
             child: BlocBuilder<ArriveBloc, ArriveState>(
                 builder: (context, state) {
+                  _context = context;
                   return Scaffold(
                       extendBodyBehindAppBar: true,
                       appBar: AppBar(
@@ -227,6 +217,34 @@ class _ArrivePageState extends State<ArrivePage> {
                 }
             )
         )
+    );
+  }
+
+
+  void _showCancelConfirmationDialog(BuildContext _context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Batalkan Parkir'),
+          content: Text('Anda yakin ingin membatalkan parkir?'),
+          actions: [
+            TextButton(
+              child: Text('Ya'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _context.read<ArriveBloc>().cancelParking((parkingCheckDetail?.retribusi.lokasiParkir?.id ?? 0).toString());
+              },
+            ),
+            TextButton(
+              child: Text('Tidak'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
