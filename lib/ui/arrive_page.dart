@@ -51,7 +51,7 @@ class _ArrivePageState extends State<ArrivePage> {
 
   @override
   Widget build(BuildContext context) {
-    var retributionId = ModalRoute.of(context)?.settings.arguments as int;
+    retributionId = ModalRoute.of(context)?.settings.arguments as int;
 
     return BlocProvider(
         create: (context) => ArriveBloc()..checkDetailParking(retributionId.toString()),
@@ -275,7 +275,7 @@ class _ArrivePageState extends State<ArrivePage> {
          ),
          const SizedBox(height: 50,),
          ButtonDefault(title: "Bayar Nanti", color: AppColors.greenLight, textColor: AppColors.green, onTap: (){
-           context.read<ArriveBloc>().paymentCheck(retributionId, PAY_LATER_CODE);
+           context.read<ArriveBloc>().paymentChoice(retributionId, PAY_LATER_CODE);
          }),
          const SizedBox(height: 10,),
          ButtonDefault(title: "Bayar Sekarang", color: AppColors.green, onTap: (){
@@ -372,7 +372,7 @@ class _ArrivePageState extends State<ArrivePage> {
              );
            }else{
 
-             context.read<ArriveBloc>().paymentCheck(retributionId, PAY_NOW_CODE);
+             context.read<ArriveBloc>().paymentChoice(retributionId, PAY_NOW_CODE);
              // Navigator.pushNamed(context, "/payment", arguments: {
              //   "retribusi": parkingCheckDetail?.retribusi,
              //   "jam": timeSelected

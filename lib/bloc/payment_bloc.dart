@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:parkirta/data/message/response/parking/parking_check_detail_response.dart';
+import 'package:parkirta/data/message/response/payment/payment_entry_response.dart';
 import 'package:parkirta/data/repository/parking_repository.dart';
 import 'package:parkirta/data/repository/payment_repository.dart';
 import 'package:parkirta/data/repository/user_repository.dart';
@@ -20,31 +21,35 @@ class PaymentBloc extends Cubit<PaymentState> {
     await _paymentRepository.paymentEntry(retributionId, totalHours, viaJukir);
     emit(LoadingState(false));
     if (response.success) {
-      emit(PaymentEntrySuccessState(viaJukir: viaJukir == VIA_JUKIR_CODE));
+      SpUtil.putString(INVOICE_ACTIVE, response.data!.pembayaran.noInvoice);
+      emit(PaymentEntrySuccessState(viaJukir: viaJukir == VIA_JUKIR_CODE, paymentInfo: response.data!.pembayaran));
     } else {
       emit(ErrorState(error: response.message));
     }
   }
 
-  Future<void> paymentCheckout(String inv, int pin) async {
+  Future<bool> paymentCheckout(String inv, String pin) async {
     emit(LoadingState(true));
     final response =
     await _paymentRepository.paymentCheckout(inv, pin);
     emit(LoadingState(false));
     if (response.success) {
-      emit(PaymentCheckoutSuccessState());
+      SpUtil.remove(RETRIBUTION_ID_ACTIVE);
+      SpUtil.remove(INVOICE_ACTIVE);
+      return true;
     } else {
       emit(ErrorState(error: response.message));
+      return false;
     }
   }
 
   Future<void> leaveParking(int id, int viaJukir) async {
     emit(LoadingState(true));
-    final response =
-    await _parkingRepository.leaveParking(id, viaJukir);
+    final response = await _parkingRepository.leaveParking(id, viaJukir);
     emit(LoadingState(false));
     if (response.success) {
-      emit(LeaveParkingSuccessState(viaJukir: viaJukir == VIA_JUKIR_CODE));
+      SpUtil.putString(INVOICE_ACTIVE, response.data!.pembayaran.noInvoice);
+      emit(LeaveParkingSuccessState(viaJukir: viaJukir == VIA_JUKIR_CODE, paymentInfo: response.data!.pembayaran));
     } else {
       emit(ErrorState(error: response.message));
     }
@@ -60,13 +65,15 @@ class ArriveInitial extends PaymentState {
 
 class LeaveParkingSuccessState extends PaymentState {
   final bool viaJukir;
-  const LeaveParkingSuccessState({required this.viaJukir});
+  final PaymentEntry paymentInfo;
+  const LeaveParkingSuccessState({required this.viaJukir, required this.paymentInfo});
 }
 
 
 class PaymentEntrySuccessState extends PaymentState {
   final bool viaJukir;
-  const PaymentEntrySuccessState({required this.viaJukir});
+  final PaymentEntry paymentInfo;
+  const PaymentEntrySuccessState({required this.viaJukir, required this.paymentInfo});
 }
 
 class PaymentCheckoutSuccessState extends PaymentState {

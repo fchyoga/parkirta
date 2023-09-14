@@ -97,8 +97,22 @@ class _MainAppState extends State<AppView> {
       print("masuk di dalam $topicKey");
       if(topicKey == PARKING_ACCEPTED){
         Navigator.pushReplacementNamed(NavigationService.navigatorKey.currentContext!,'/arrive', arguments: int.tryParse(message.data["id"]));
-      }else if(topicKey == "payment_entry"){
-        Navigator.pushNamed(NavigationService.navigatorKey.currentContext!,'/detail_parking', arguments: int.tryParse(message.data["id"]));
+      }else if(topicKey == PAYMENT_COMPLETE){
+        SpUtil.remove(RETRIBUTION_ID_ACTIVE);
+        SpUtil.remove(INVOICE_ACTIVE);
+        Navigator.pushNamed(NavigationService.navigatorKey.currentContext!,'/payment_success', arguments: int.tryParse(message.data["id"]));
+      }
+
+    });
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('A new onMessageOpenedApp event was published! ');
+      print('remote message ${message.data} ');
+      if(message.data["topic_key"] == PARKING_ACCEPTED && NavigationService.navigatorKey.currentContext!=null){
+        Navigator.pushNamed(NavigationService.navigatorKey.currentContext!,'/arrive', arguments: int.tryParse(message.data["id"]));
+      }else if(message.data["topic_key"] == PAYMENT_COMPLETE && NavigationService.navigatorKey.currentContext!=null){
+        SpUtil.remove(RETRIBUTION_ID_ACTIVE);
+        SpUtil.remove(INVOICE_ACTIVE);
+        Navigator.pushNamed(NavigationService.navigatorKey.currentContext!,'/payment_success', arguments: int.tryParse(message.data["id"]));
       }
 
     });
@@ -124,7 +138,7 @@ class _MainAppState extends State<AppView> {
           '/login': (context) => LoginPage(),
           '/register': (context) => RegisterPage(),
           '/pre_login': (context) => const PreLoginPage(),
-          '/home': (context) => HomePage(),
+          '/home': (context) => MainPage(),
           '/arrive': (context) => ArrivePage(),
           '/payment': (context) => PaymentPage(),
           '/payment_success': (context) => PaymentSuccessPage(),
@@ -166,21 +180,6 @@ late AndroidNotificationChannel channel;
 bool isFlutterLocalNotificationsInitialized = false;
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // await Firebase.initializeApp(options: Platform.isAndroid ? const FirebaseOptions(
-  //   apiKey: 'AIzaSyC3R_H1r6CHMkJC_re5-62Fn9wmtSULBKQ',
-  //   appId: '1:504569686711:android:2a7a345f5ba2bc2255fb32',
-  //   messagingSenderId: '504569686711',
-  //   projectId: 'smart-dmi',
-  // ): const FirebaseOptions(
-  //   apiKey: 'AIzaSyC3R_H1r6CHMkJC_re5-62Fn9wmtSULBKQ',
-  //   appId: '1:504569686711:android:2a7a345f5ba2bc2255fb32',
-  //   messagingSenderId: '504569686711',
-  //   projectId: 'smart-dmi',
-  //   androidClientId: '504569686711-nlpk1c0435om21kgg21sb5glel2747kd.apps.googleusercontent.com',
-  //   iosClientId: '504569686711-nlpk1c0435om21kgg21sb5glel2747kd.apps.googleusercontent.com',
-  //   iosBundleId: 'io.flutter.plugins.firebase.messaging',
-  // ));
-  // await setupFlutterNotifications();
   showFlutterNotification(message);
 
 
