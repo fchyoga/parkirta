@@ -36,7 +36,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   late BuildContext _context;
   final _loadingDialog = LoadingDialog();
-  late GoogleMapController _mapController;
+  GoogleMapController? _mapController;
   List<dynamic> _parkingLocations = [];
   Set<Polyline> _polylines = {};
   Set<Marker> _myLocationMarker = {};
@@ -84,6 +84,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       }
     });
     _loadParkIcon();
+    _fetchParkingLocations();
+    _getUserLocation();
     WidgetsBinding.instance.addObserver(this);
     super.initState();
   }
@@ -98,7 +100,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    _mapController.dispose();
+    _mapController?.dispose();
     super.dispose();
   }
 
@@ -178,6 +180,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                             child: GoogleMap(
                               onMapCreated: _onMapCreated,
                               zoomControlsEnabled: false,
+                              myLocationButtonEnabled: true,
                               mapType: MapType.normal,
                               initialCameraPosition: const CameraPosition(
                                 target: LatLng(-5.143648100120257, 119.48282708990482), // Ganti dengan posisi awal peta
@@ -392,12 +395,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       };
     });
 
-    _mapController.animateCamera(CameraUpdate.newLatLng(_myLocation));
+    _mapController?.animateCamera(CameraUpdate.newLatLng(_myLocation));
   }
 
   Future<void> _fetchParkingLocations() async {
     try {
+      debugPrint("get parking");
       List<dynamic> locations = await getLocations();
+      debugPrint("loc parking ${locations.length}");
       setState(() {
         _parkingLocations = locations;
       });
@@ -411,8 +416,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _mapController = controller;
     debugPrint("map created");
 
-    _fetchParkingLocations();
-    _getUserLocation();
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (_mapController != '') {
         setState(() {

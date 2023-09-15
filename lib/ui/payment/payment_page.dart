@@ -162,7 +162,8 @@ class _PaymentPageState extends State<PaymentPage> {
          const SizedBox(height: 80,),Text("Metode pembayaran", style: const TextStyle(fontWeight: FontWeight.bold)),
          const SizedBox(height: 10,),
          ButtonDefault(title: "Bayar Sekarang", color: AppColors.green, onTap: () {
-           var inv = SpUtil.getString(INVOICE_ACTIVE);
+           var inv = SpUtil.getString(INVOICE_ACTIVE, defValue: null);
+           debugPrint("testtt $inv ${inv==null} ${inv?.isEmpty}");
            if(paymentStep == PAY_NOW){
              if(inv==null){
                var hour = duration==null ? 1: duration!.inMinutes.remainder(60) > 5 ? duration!.inHours + 1: duration!.inHours;
