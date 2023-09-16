@@ -5,8 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:parkirta/bloc/auth_bloc.dart';
 import 'package:parkirta/color.dart';
+import 'package:parkirta/data/model/biaya_parkir.dart';
+import 'package:parkirta/data/model/lokasi_parkir.dart';
+import 'package:parkirta/data/model/member.dart';
+import 'package:parkirta/data/model/retribusi.dart';
 import 'package:parkirta/ui/arrive_page.dart';
 import 'package:parkirta/ui/auth/login_page.dart';
 import 'package:parkirta/ui/auth/pre_login_page.dart';
@@ -17,22 +22,30 @@ import 'package:parkirta/ui/main_page.dart';
 import 'package:parkirta/ui/payment/payment_page.dart';
 import 'package:parkirta/ui/payment/payment_success_page.dart';
 import 'package:parkirta/utils/contsant/authentication.dart';
+import 'package:parkirta/utils/contsant/transaction_const.dart';
 import 'package:sp_util/sp_util.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:top_snackbar_flutter/custom_snack_bar.dart';
+import 'package:top_snackbar_flutter/top_snack_bar.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SpUtil.getInstance();
+  await Hive.initFlutter();
+  Hive.registerAdapter(RetribusiAdapter());
+  Hive.registerAdapter(BiayaParkirAdapter());
+  Hive.registerAdapter(LokasiParkirAdapter());
+  Hive.registerAdapter(MemberAdapter());
   Bloc.observer = AppBlocObserver();
   await Firebase.initializeApp(options: const FirebaseOptions(
-    apiKey: 'AIzaSyD-v31D6wK51CfyAqnpPYWPSiUpl-E56v8',
-    appId: '1:970018001351:android:a81ed1a2e42ae607de09e2',
-    messagingSenderId: '970018001351',
-    projectId: 'biznet-d7234',
+    apiKey: 'AIzaSyCRlojuTRtBCNauwVM9a7nWvoeFpt_yUkA',
+    appId: '1:498872125018:android:3dec57b31c03211a363a63',
+    messagingSenderId: '498872125018',
+    projectId: 'parkirta',
   ));
   await setupFlutterNotifications();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  runApp(App());
+  runApp(const App());
 }
 
 /// Custom [BlocObserver] that observes all bloc and cubit state changes.
@@ -63,9 +76,48 @@ class App extends StatelessWidget {
   }
 }
 
-class AppView extends StatelessWidget {
+class AppView extends StatefulWidget {
 
   const AppView({Key? key}) : super(key: key);
+
+
+  @override
+  State<AppView> createState() => _MainAppState();
+}
+
+class _MainAppState extends State<AppView> {
+
+  @override
+  void initState() {
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message){
+      print("masuk di dalam");
+
+      String? topicKey = message.data["topic_key"];
+      print("masuk di dalam $topicKey");
+      if(topicKey == PARKING_ACCEPTED){
+        Navigator.pushReplacementNamed(NavigationService.navigatorKey.currentContext!,'/arrive', arguments: int.tryParse(message.data["id"]));
+      }else if(topicKey == PAYMENT_COMPLETE){
+        SpUtil.remove(RETRIBUTION_ID_ACTIVE);
+        SpUtil.remove(INVOICE_ACTIVE);
+        Navigator.pushNamed(NavigationService.navigatorKey.currentContext!,'/payment_success', arguments: int.tryParse(message.data["id"]));
+      }
+
+    });
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('A new onMessageOpenedApp event was published! ');
+      print('remote message ${message.data} ');
+      if(message.data["topic_key"] == PARKING_ACCEPTED && NavigationService.navigatorKey.currentContext!=null){
+        Navigator.pushNamed(NavigationService.navigatorKey.currentContext!,'/arrive', arguments: int.tryParse(message.data["id"]));
+      }else if(message.data["topic_key"] == PAYMENT_COMPLETE && NavigationService.navigatorKey.currentContext!=null){
+        SpUtil.remove(RETRIBUTION_ID_ACTIVE);
+        SpUtil.remove(INVOICE_ACTIVE);
+        Navigator.pushNamed(NavigationService.navigatorKey.currentContext!,'/payment_success', arguments: int.tryParse(message.data["id"]));
+      }
+
+    });
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +138,7 @@ class AppView extends StatelessWidget {
           '/login': (context) => LoginPage(),
           '/register': (context) => RegisterPage(),
           '/pre_login': (context) => const PreLoginPage(),
-          '/home': (context) => HomePage(),
+          '/home': (context) => MainPage(),
           '/arrive': (context) => ArrivePage(),
           '/payment': (context) => PaymentPage(),
           '/payment_success': (context) => PaymentSuccessPage(),
@@ -118,27 +170,17 @@ class AppRoute extends StatelessWidget {
 }
 
 
+class NavigationService {
+  static GlobalKey<ScaffoldState> navigatorKey = GlobalKey<ScaffoldState>();
+}
+
+
 // ---------- Firebase & Push Notify Configuration
 late AndroidNotificationChannel channel;
 bool isFlutterLocalNotificationsInitialized = false;
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // await Firebase.initializeApp(options: Platform.isAndroid ? const FirebaseOptions(
-  //   apiKey: 'AIzaSyC3R_H1r6CHMkJC_re5-62Fn9wmtSULBKQ',
-  //   appId: '1:504569686711:android:2a7a345f5ba2bc2255fb32',
-  //   messagingSenderId: '504569686711',
-  //   projectId: 'smart-dmi',
-  // ): const FirebaseOptions(
-  //   apiKey: 'AIzaSyC3R_H1r6CHMkJC_re5-62Fn9wmtSULBKQ',
-  //   appId: '1:504569686711:android:2a7a345f5ba2bc2255fb32',
-  //   messagingSenderId: '504569686711',
-  //   projectId: 'smart-dmi',
-  //   androidClientId: '504569686711-nlpk1c0435om21kgg21sb5glel2747kd.apps.googleusercontent.com',
-  //   iosClientId: '504569686711-nlpk1c0435om21kgg21sb5glel2747kd.apps.googleusercontent.com',
-  //   iosBundleId: 'io.flutter.plugins.firebase.messaging',
-  // ));
-  // await setupFlutterNotifications();
-  // showFlutterNotification(message);
+  showFlutterNotification(message);
 
 
   // If you're going to use other Firebase services in the background, such as Firestore,

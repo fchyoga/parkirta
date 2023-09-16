@@ -1,19 +1,17 @@
-import 'dart:typed_data';
+
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
-import 'package:parkirta/bloc/arrive_bloc.dart';
-import 'package:parkirta/data/message/response/parking/parking_check_detail_response.dart';
-import 'package:parkirta/color.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:http/http.dart' as http;
+import 'package:parkirta/bloc/arrive_bloc.dart';
+import 'package:parkirta/color.dart';
+import 'package:parkirta/data/message/response/parking/parking_check_detail_response.dart';
 import 'package:parkirta/utils/contsant/app_colors.dart';
 import 'package:parkirta/utils/contsant/transaction_const.dart';
 import 'package:parkirta/widget/button/button_default.dart';
 import 'package:parkirta/widget/loading_dialog.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sp_util/sp_util.dart';
 import 'package:top_snackbar_flutter/custom_snack_bar.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
@@ -30,43 +28,31 @@ class ArrivePage extends StatefulWidget {
 class _ArrivePageState extends State<ArrivePage> {
 
   final _loadingDialog = LoadingDialog();
+  late BuildContext _context;
   late int retributionId;
   ParkingCheckDetail? parkingCheckDetail;
   List<Marker> markers = [];
   bool payNow = false;
   String? timeSelected;
+  Duration? duration;
+  // late Timer periodic;
 
-  void _showCancelConfirmationDialog(BuildContext _context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Batalkan Parkir'),
-          content: Text('Anda yakin ingin membatalkan parkir?'),
-          actions: [
-            TextButton(
-              child: Text('Ya'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _context.read<ArriveBloc>().cancelParking((parkingCheckDetail?.retribusi.lokasiParkir.id ?? 0).toString());
-              },
-            ),
-            TextButton(
-              child: Text('Tidak'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
+  @override
+  void initState() {
+    // periodic = Timer.periodic(Duration(seconds: 1), (timer) {
+    //   var parkingCheck = SpUtil.getString(PARKING_ACCEPTED);
+    //   if(parkingCheck == retributionId.toString()){
+    //     SpUtil.remove(PARKING_ACCEPTED);
+    //     _context.read<ArriveBloc>().checkDetailParking(retributionId.toString());
+    //   }
+    // });
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    retributionId = SpUtil.getInt(RETRIBUTION_ID_ACTIVE) ?? 0;
-    
+    retributionId = ModalRoute.of(context)?.settings.arguments as int;
+
     return BlocProvider(
         create: (context) => ArriveBloc()..checkDetailParking(retributionId.toString()),
         child: BlocListener<ArriveBloc, ArriveState>(
@@ -93,7 +79,9 @@ class _ArrivePageState extends State<ArrivePage> {
                 if(state.payNow == PAY_NOW_CODE){
                   Navigator.pushNamed(context, "/payment", arguments: {
                     "retribusi": parkingCheckDetail?.retribusi,
-                    "jam": timeSelected
+                    "jam": timeSelected,
+                    "durasi": duration,
+                    PAYMENT_STEP: PAY_NOW
                   });
                 }else{
                   SpUtil.putString(PAYMENT_STEP, PAY_LATER);
@@ -119,6 +107,7 @@ class _ArrivePageState extends State<ArrivePage> {
             },
             child: BlocBuilder<ArriveBloc, ArriveState>(
                 builder: (context, state) {
+                  _context = context;
                   return Scaffold(
                       extendBodyBehindAppBar: true,
                       appBar: AppBar(
@@ -145,7 +134,7 @@ class _ArrivePageState extends State<ArrivePage> {
                           child: Column(
                             children: [
                               Text(
-                                parkingCheckDetail?.retribusi.lokasiParkir.namaLokasi ?? "",
+                                parkingCheckDetail?.retribusi.lokasiParkir?.namaLokasi ?? "",
                                 maxLines: 2,
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
@@ -155,7 +144,7 @@ class _ArrivePageState extends State<ArrivePage> {
                                 ),
                               ),
                               Text(
-                                parkingCheckDetail?.retribusi.lokasiParkir.alamatLokasi ?? "",
+                                parkingCheckDetail?.retribusi.lokasiParkir?.alamatLokasi ?? "",
                                 maxLines: 2,
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
@@ -231,6 +220,34 @@ class _ArrivePageState extends State<ArrivePage> {
     );
   }
 
+
+  void _showCancelConfirmationDialog(BuildContext _context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Batalkan Parkir'),
+          content: Text('Anda yakin ingin membatalkan parkir?'),
+          actions: [
+            TextButton(
+              child: Text('Ya'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _context.read<ArriveBloc>().cancelParking((parkingCheckDetail?.retribusi.lokasiParkir?.id ?? 0).toString());
+              },
+            ),
+            TextButton(
+              child: Text('Tidak'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget buildParkingConfirmation(BuildContext context){
     return Container(
       color: Colors.white,
@@ -258,7 +275,7 @@ class _ArrivePageState extends State<ArrivePage> {
          ),
          const SizedBox(height: 50,),
          ButtonDefault(title: "Bayar Nanti", color: AppColors.greenLight, textColor: AppColors.green, onTap: (){
-           context.read<ArriveBloc>().paymentCheck(retributionId, PAY_LATER_CODE);
+           context.read<ArriveBloc>().paymentChoice(retributionId, PAY_LATER_CODE);
          }),
          const SizedBox(height: 10,),
          ButtonDefault(title: "Bayar Sekarang", color: AppColors.green, onTap: (){
@@ -303,8 +320,16 @@ class _ArrivePageState extends State<ArrivePage> {
            );
 
            if(pickedTime != null ){
+
+             var now = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, pickedTime.hour, pickedTime.minute);
+             if( DateTime.now().hour> pickedTime.hour){
+               now = now.add(Duration(days: 1));
+             }
+             print("Time is ${ pickedTime.hour}, ${pickedTime.minute} $now ${parkingCheckDetail!.retribusi.createdAt}");
              setState(() {
                timeSelected = "${pickedTime.hour}:${pickedTime.minute}";
+               duration = now.difference(parkingCheckDetail!.retribusi.createdAt);
+               print("duration is ${ duration?.inHours.toString()},${ duration?.inMinutes.remainder(60).toString()}");
              });
            }else{
              print("Time is not selected");
@@ -321,8 +346,8 @@ class _ArrivePageState extends State<ArrivePage> {
                mainAxisSize: MainAxisSize.min,
                children: [
                  Text("Lokasi : ", style: TextStyle(color: AppColors.text)),
-                 Text(parkingCheckDetail!.retribusi.lokasiParkir.namaLokasi, style: TextStyle(color: AppColors.text, fontWeight: FontWeight.bold)),
-                 Text(parkingCheckDetail!.retribusi.lokasiParkir.alamatLokasi, style: TextStyle(color: AppColors.text)),
+                 Text(parkingCheckDetail!.retribusi.lokasiParkir?.namaLokasi ?? "-", style: TextStyle(color: AppColors.text, fontWeight: FontWeight.bold)),
+                 Text(parkingCheckDetail!.retribusi.lokasiParkir?.alamatLokasi ?? "-", style: TextStyle(color: AppColors.text)),
                ],
              ),
              SizedBox(width: 20,),
@@ -330,7 +355,7 @@ class _ArrivePageState extends State<ArrivePage> {
                crossAxisAlignment: CrossAxisAlignment.end,
                children: [
                  const Text("Tarif :", style: TextStyle(color: AppColors.text)),
-                 Text("Rp ${parkingCheckDetail!.retribusi.biayaParkir?.biayaParkir ?? 0}", style: TextStyle(color: AppColors.text, fontWeight: FontWeight.bold)),
+                 Text("Rp ${parkingCheckDetail!.retribusi.biayaParkir?.biayaParkir ?? 0}", style: const TextStyle(color: AppColors.text, fontWeight: FontWeight.bold)),
                ],
              )
 
@@ -347,7 +372,7 @@ class _ArrivePageState extends State<ArrivePage> {
              );
            }else{
 
-             context.read<ArriveBloc>().paymentCheck(retributionId, PAY_NOW_CODE);
+             context.read<ArriveBloc>().paymentChoice(retributionId, PAY_NOW_CODE);
              // Navigator.pushNamed(context, "/payment", arguments: {
              //   "retribusi": parkingCheckDetail?.retribusi,
              //   "jam": timeSelected

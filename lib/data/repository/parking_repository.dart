@@ -7,6 +7,7 @@ import 'package:parkirta/data/message/response/general_response.dart';
 import 'package:parkirta/data/message/response/login_response.dart';
 import 'package:parkirta/data/message/response/parking/parking_check_detail_response.dart';
 import 'package:parkirta/data/message/response/parking/submit_arrive_response.dart';
+import 'package:parkirta/data/message/response/payment/payment_entry_response.dart';
 import 'package:parkirta/utils/contsant/user_const.dart';
 import 'package:sp_util/sp_util.dart';
 
@@ -28,6 +29,8 @@ class ParkingRepository {
           headers: {'Authorization': 'Bearer $token'},
       );
 
+      debugPrint("request $data");
+      debugPrint("response ${response.body}");
       return response.statusCode == 200 ? submitArriveResponseFromJson(response.body)
       : SubmitArriveResponse( success: false, message: "Failed submit arrival");
     } on HttpException catch(e, stackTrace){
@@ -45,6 +48,7 @@ class ParkingRepository {
           Uri.parse("${Endpoint.urlCheckDetailParking}/$id"),
           headers: {'Authorization': 'Bearer $token'},
       );
+      debugPrint("request id $id");
       debugPrint("response ${response.body}");
       return response.statusCode == 200 ? parkingCheckDetailResponseFromJson(response.body)
       : ParkingCheckDetailResponse( success: false, message: "Failed get data");
@@ -54,6 +58,30 @@ class ParkingRepository {
     } catch (e, stackTrace) {
       debugPrintStack(label: e.toString(), stackTrace: stackTrace);
       return ParkingCheckDetailResponse( success: false, message:  e.toString());
+    }
+  }
+
+  Future<PaymentEntryResponse> leaveParking(int id, int viaJukir) async {
+    try {
+      Map<String, dynamic> data = {
+        'id_retribusi_parkir': id.toString(),
+        'is_via_jukir': viaJukir.toString()
+      };
+      var response = await http.post(
+        Uri.parse(Endpoint.urlLeaveParking),
+        body: data,
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      debugPrint("request ${data}");
+      debugPrint("response ${response.body}");
+      return response.statusCode == 200 || response.statusCode == 404 ? paymentEntryResponseFromJson(response.body)
+          : PaymentEntryResponse( success: false, message: "Failed cancel parking");
+    } on HttpException catch(e, stackTrace){
+      debugPrintStack(label: e.toString(), stackTrace: stackTrace);
+      return PaymentEntryResponse( success: false, message: e.message);
+    } catch (e, stackTrace) {
+      debugPrintStack(label: e.toString(), stackTrace: stackTrace);
+      return PaymentEntryResponse( success: false, message:  e.toString());
     }
   }
 
@@ -67,7 +95,7 @@ class ParkingRepository {
           body: data,
           headers: {'Authorization': 'Bearer $token'},
       );
-      debugPrint("response ${data}");
+      debugPrint("request ${data}");
       debugPrint("response ${response.body}");
       return response.statusCode == 200 || response.statusCode == 404 ? generalResponseFromJson(response.body)
       : GeneralResponse( success: false, message: "Failed cancel parking");

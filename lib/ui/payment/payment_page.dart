@@ -1,23 +1,18 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screen_lock/flutter_screen_lock.dart';
 import 'package:parkirta/bloc/payment_bloc.dart';
-import 'package:parkirta/data/message/response/parking/parking_check_detail_response.dart';
-import 'package:parkirta/color.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:http/http.dart' as http;
 import 'package:parkirta/utils/contsant/app_colors.dart';
 import 'package:parkirta/utils/contsant/transaction_const.dart';
 import 'package:parkirta/widget/button/button_default.dart';
 import 'package:parkirta/widget/loading_dialog.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sp_util/sp_util.dart';
 import 'package:top_snackbar_flutter/custom_snack_bar.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
+
+import '../../data/model/retribusi.dart';
 
 
 class PaymentPage extends StatefulWidget {
@@ -31,7 +26,10 @@ class PaymentPage extends StatefulWidget {
 class _PaymentPageState extends State<PaymentPage> {
 
   final _loadingDialog = LoadingDialog();
+  late BuildContext _context;
   Retribusi? retribution;
+  Duration? duration;
+  String? paymentStep;
 
 
   @override
@@ -39,6 +37,10 @@ class _PaymentPageState extends State<PaymentPage> {
     var args = ModalRoute.of(context)?.settings.arguments as Map;
     retribution = args["retribusi"];
     var time = args["jam"];
+    duration = args["durasi"];
+    debugPrint("cek time $time");
+    debugPrint("cek hour ${duration!.inHours} : ${duration!.inMinutes.remainder(60)}");
+    paymentStep = args[PAYMENT_STEP];
     return BlocProvider(
         create: (context) => PaymentBloc(),
         child: BlocListener<PaymentBloc, PaymentState>(
@@ -46,7 +48,18 @@ class _PaymentPageState extends State<PaymentPage> {
               if (state is LoadingState) {
                 state.show ? _loadingDialog.show(context) : _loadingDialog.hide();
               // } else if (state is CheckDetailParkingSuccessState) {
-
+              } else if (state is PaymentEntrySuccessState) {
+                if(!state.viaJukir) {
+                  openKeyPad(state.paymentInfo.noInvoice);
+                }else{
+                  showBottomSheetWaiting(context);
+                }
+              } else if (state is LeaveParkingSuccessState) {
+                if(!state.viaJukir) {
+                  openKeyPad(state.paymentInfo.noInvoice);
+                }else{
+                  showBottomSheetWaiting(context);
+                }
               } else if (state is ErrorState) {
                 showTopSnackBar(
                   context,
@@ -58,6 +71,7 @@ class _PaymentPageState extends State<PaymentPage> {
             },
             child: BlocBuilder<PaymentBloc, PaymentState>(
                 builder: (context, state) {
+                  _context = context;
                   return Scaffold(
                       backgroundColor: Colors.white,
                       appBar: AppBar(
@@ -121,7 +135,7 @@ class _PaymentPageState extends State<PaymentPage> {
                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                children: [
                  const Text("Waktu Parkir : ", style: TextStyle(fontWeight: FontWeight.normal)),
-                 Text(retribution!.lamaParkir ?? "-", style: const TextStyle(fontWeight: FontWeight.normal)),
+                 Text(getDurationString() ?? "-", style: const TextStyle(fontWeight: FontWeight.normal)),
                ],
              ),
                const SizedBox(height: 5),
@@ -138,7 +152,7 @@ class _PaymentPageState extends State<PaymentPage> {
                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                  children: [
                    const Text("Total : ", style: TextStyle(fontWeight: FontWeight.bold)),
-                   Text("Rp ${retribution!.subtotalBiaya ?? 0}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                   Text("Rp ${getTotalPrice() ?? 0}", style: const TextStyle(fontWeight: FontWeight.bold)),
                  ],
                ),
              ],
@@ -147,25 +161,50 @@ class _PaymentPageState extends State<PaymentPage> {
 
          const SizedBox(height: 80,),Text("Metode pembayaran", style: const TextStyle(fontWeight: FontWeight.bold)),
          const SizedBox(height: 10,),
-         ButtonDefault(title: "Bayar Sekarang", color: AppColors.green, onTap: () => screenLock(
-           context: context,
-           correctString: 'x' * 6,
-
-           title: const Padding(padding: EdgeInsets.only(bottom: 10), child: Text("Enter PIN", style: TextStyle(fontSize: 16),),),
-           onValidate: (value) async => await Future<bool>.delayed(
-             const Duration(milliseconds: 500),
-                 () => true,
-           ),
-           onUnlocked: (){
-             Navigator.of(context).pushNamed("/payment_success");
+         ButtonDefault(title: "Bayar Sekarang", color: AppColors.green, onTap: () {
+           var inv = SpUtil.getString(INVOICE_ACTIVE, defValue: null);
+           debugPrint("testtt $inv ${inv==null} ${inv?.isEmpty}");
+           if(paymentStep == PAY_NOW){
+             if(inv==null){
+               var hour = duration==null ? 1: duration!.inMinutes.remainder(60) > 5 ? duration!.inHours + 1: duration!.inHours;
+               context.read<PaymentBloc>().paymentEntry(retribution!.id, hour , NOT_VIA_JUKIR_CODE);
+             }else{
+               openKeyPad(inv);
+             }
+           }else{
+             if(inv==null) {
+               context.read<PaymentBloc>().leaveParking(
+                   retribution!.id, NOT_VIA_JUKIR_CODE);
+             }else{
+               openKeyPad(inv);
+             }
            }
+    }
+           //   screenLock(
+           // context: context,
+           // correctString: 'x' * 6,
+           //
+           // title: const Padding(padding: EdgeInsets.only(bottom: 10), child: Text("Enter PIN", style: TextStyle(fontSize: 16),),),
+           // onValidate: (value) async => await Future<bool>.delayed(
+           //   const Duration(milliseconds: 500),
+           //       () => true,
+           // ),
+           // onUnlocked: (){
+           //   Navigator.of(context).pushNamed("/payment_success");
+           // }
 
-         ),
+         // ),
          ),
          const SizedBox(height: 10,),
          ButtonDefault(title: "Via Jukir", color: AppColors.greenLight, textColor: AppColors.green, onTap: (){
-           // context.read<PaymentBloc>().paymentEntry(retribution!.id, 0 , 1);
-           showBottomSheetWaiting(context);
+           if(paymentStep == PAY_NOW){
+
+             var hour = duration==null ? 1: duration!.inMinutes.remainder(60) > 5 ? duration!.inHours + 1: duration!.inHours;
+             context.read<PaymentBloc>().paymentEntry(retribution!.id, hour , VIA_JUKIR_CODE);
+           }else{
+             context.read<PaymentBloc>().leaveParking(retribution!.id, VIA_JUKIR_CODE);
+           }
+           // showBottomSheetWaiting(context);
          }),
 
        ],
@@ -176,9 +215,9 @@ class _PaymentPageState extends State<PaymentPage> {
 
   void showBottomSheetWaiting(BuildContext _context) {
 
-    Timer(Duration(seconds: 5), (){
-      Navigator.of(context).pushNamed("/payment_success");
-    });
+    // Timer(Duration(seconds: 5), (){
+    //   Navigator.of(context).pushNamed("/payment_success");
+    // });
     showModalBottomSheet(
         context: _context,
         isScrollControlled: true,
@@ -222,5 +261,41 @@ class _PaymentPageState extends State<PaymentPage> {
             ),
           );
         });
+  }
+
+  String? getDurationString(){
+    if(duration!=null){
+      var minutes = duration!.inMinutes.remainder(60) == 0 ? "01" :duration!.inMinutes.remainder(60).toString().padLeft(2, '0');
+      return "${duration!.inHours}:$minutes";
+    }else{
+      return null;
+    }
+  }
+
+  String? getTotalPrice(){
+    if(duration!=null && retribution?.biayaParkir?.biayaParkir !=null){
+
+      var hour = duration==null ? 1: duration!.inMinutes.remainder(60) > 5 ? duration!.inHours + 1: duration!.inMinutes;
+      debugPrint("cek hour ${duration!.inHours} : ${duration!.inMinutes.remainder(60)}");
+      debugPrint("cek hour $hour * ${retribution!.biayaParkir!.biayaParkir}");
+      return "${hour*retribution!.biayaParkir!.biayaParkir}";
+    }else{
+      return null;
+    }
+  }
+
+  void openKeyPad(String inv){
+    screenLock(
+        context: context,
+        correctString: 'x' * 6,
+        title: const Padding(padding: EdgeInsets.only(bottom: 10), child: Text("Enter PIN", style: TextStyle(fontSize: 16),),),
+        onValidate: (value) async => await _context.read<PaymentBloc>().paymentCheckout(inv, value),
+        onUnlocked: (){
+          Navigator.pushNamedAndRemoveUntil(context, '/payment_success', ModalRoute.withName('/'), arguments: retribution?.id);
+        },
+        onError: (value){
+          Navigator.pop(context);
+        }
+    );
   }
 }

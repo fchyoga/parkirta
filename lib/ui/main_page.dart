@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:parkirta/color.dart';
+import 'package:parkirta/main.dart';
 import 'package:parkirta/ui/wallet.dart';
 import 'package:parkirta/ui/dompet.dart';
 import 'package:parkirta/ui/home_page.dart';
@@ -63,6 +64,7 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: NavigationService.navigatorKey,
       body: _pages[_currentIndex],
       bottomNavigationBar: Container(
         color: Colors.white,
@@ -110,17 +112,48 @@ class _MainPageState extends State<MainPage> {
         ),
       ),
       floatingActionButton: _currentIndex == 0
-          ? FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => MainPage()),
-          );
-        },
-        backgroundColor: Red500,
-        shape: const CircleBorder(),
-        child: SvgPicture.asset("assets/images/ic_discovery.svg"),
-      ) : null,
+          ? Stack(
+        alignment: Alignment.center,
+        children: [
+          Positioned(
+            bottom: 1,
+              child: Container(
+            width: 55,
+            height: 50,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(50),
+              color: AppColors.colorPrimary,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.colorPrimary.withOpacity(0.25),
+                  blurRadius: 8,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),)
+          ),
+          Container(
+            width: 65,
+            height: 65,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(50),
+              color: AppColors.colorPrimary,
+
+            ),
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => MainPage()),
+                );
+              },
+              child: SvgPicture.asset("assets/images/ic_discovery.svg"),
+            ) ,
+          )
+        ],
+      ): null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
