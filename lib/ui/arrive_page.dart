@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:parkirta/bloc/arrive_bloc.dart';
+import 'package:parkirta/bloc/parking_bloc.dart';
 import 'package:parkirta/color.dart';
 import 'package:parkirta/data/message/response/parking/parking_check_detail_response.dart';
 import 'package:parkirta/utils/contsant/app_colors.dart';
@@ -43,7 +43,7 @@ class _ArrivePageState extends State<ArrivePage> {
     //   var parkingCheck = SpUtil.getString(PARKING_ACCEPTED);
     //   if(parkingCheck == retributionId.toString()){
     //     SpUtil.remove(PARKING_ACCEPTED);
-    //     _context.read<ArriveBloc>().checkDetailParking(retributionId.toString());
+    //     _context.read<ParkingBloc>().checkDetailParking(retributionId.toString());
     //   }
     // });
     super.initState();
@@ -54,8 +54,8 @@ class _ArrivePageState extends State<ArrivePage> {
     retributionId = ModalRoute.of(context)?.settings.arguments as int;
 
     return BlocProvider(
-        create: (context) => ArriveBloc()..checkDetailParking(retributionId.toString()),
-        child: BlocListener<ArriveBloc, ArriveState>(
+        create: (context) => ParkingBloc()..checkDetailParking(retributionId.toString()),
+        child: BlocListener<ParkingBloc, ParkingState>(
             listener: (context, state) async{
               if (state is LoadingState) {
                 state.show ? _loadingDialog.show(context) : _loadingDialog.hide();
@@ -105,7 +105,7 @@ class _ArrivePageState extends State<ArrivePage> {
                 );
               }
             },
-            child: BlocBuilder<ArriveBloc, ArriveState>(
+            child: BlocBuilder<ParkingBloc, ParkingState>(
                 builder: (context, state) {
                   _context = context;
                   return Scaffold(
@@ -159,7 +159,7 @@ class _ArrivePageState extends State<ArrivePage> {
                           IconButton(
                             onPressed: () {
                               debugPrint("id ret ${retributionId}");
-                              context.read<ArriveBloc>().checkDetailParking(retributionId.toString());
+                              context.read<ParkingBloc>().checkDetailParking(retributionId.toString());
                             },
                             icon: const Icon(Icons.refresh),
                             color: Red900,
@@ -233,7 +233,7 @@ class _ArrivePageState extends State<ArrivePage> {
               child: Text('Ya'),
               onPressed: () {
                 Navigator.of(context).pop();
-                _context.read<ArriveBloc>().cancelParking((parkingCheckDetail?.retribusi.lokasiParkir?.id ?? 0).toString());
+                _context.read<ParkingBloc>().cancelParking((parkingCheckDetail?.retribusi.lokasiParkir?.id ?? 0).toString());
               },
             ),
             TextButton(
@@ -275,7 +275,7 @@ class _ArrivePageState extends State<ArrivePage> {
          ),
          const SizedBox(height: 50,),
          ButtonDefault(title: "Bayar Nanti", color: AppColors.greenLight, textColor: AppColors.green, onTap: (){
-           context.read<ArriveBloc>().paymentChoice(retributionId, PAY_LATER_CODE);
+           context.read<ParkingBloc>().paymentChoice(retributionId, PAY_LATER_CODE);
          }),
          const SizedBox(height: 10,),
          ButtonDefault(title: "Bayar Sekarang", color: AppColors.green, onTap: (){
@@ -287,7 +287,7 @@ class _ArrivePageState extends State<ArrivePage> {
       ),
     );
   }
-  Widget buildSelectTime(BuildContext context, ArriveState state){
+  Widget buildSelectTime(BuildContext context, ParkingState state){
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 30),
       color: Colors.white,
@@ -372,7 +372,7 @@ class _ArrivePageState extends State<ArrivePage> {
              );
            }else{
 
-             context.read<ArriveBloc>().paymentChoice(retributionId, PAY_NOW_CODE);
+             context.read<ParkingBloc>().paymentChoice(retributionId, PAY_NOW_CODE);
              // Navigator.pushNamed(context, "/payment", arguments: {
              //   "retribusi": parkingCheckDetail?.retribusi,
              //   "jam": timeSelected

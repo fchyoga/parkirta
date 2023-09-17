@@ -10,11 +10,11 @@ import 'package:parkirta/data/repository/user_repository.dart';
 import 'package:parkirta/utils/contsant/user_const.dart';
 import 'package:sp_util/sp_util.dart';
 
-class ArriveBloc extends Cubit<ArriveState> {
+class ParkingBloc extends Cubit<ParkingState> {
   ParkingRepository _parkingRepository = ParkingRepository();
   PaymentRepository _paymentRepository = PaymentRepository();
 
-  ArriveBloc() : super(ArriveInitial());
+  ParkingBloc() : super(ParkingInitial());
 
   Future<void> checkDetailParking(String id) async {
     emit(LoadingState(true));
@@ -72,36 +72,36 @@ class ArriveBloc extends Cubit<ArriveState> {
   // }
 }
 
-abstract class ArriveState {
-  const ArriveState();
+abstract class ParkingState {
+  const ParkingState();
 }
 
-class ArriveInitial extends ArriveState {
+class ParkingInitial extends ParkingState {
 }
 
-class CheckDetailParkingSuccessState extends ArriveState {
+class CheckDetailParkingSuccessState extends ParkingState {
   final ParkingCheckDetail data;
   const CheckDetailParkingSuccessState({required this.data});
 }
 
-class  CancelParkingSuccessState extends ArriveState {
+class  CancelParkingSuccessState extends ParkingState {
 }
 
-class PaymentCheckSuccessState extends ArriveState {
+class PaymentCheckSuccessState extends ParkingState {
   final int payNow;
   const PaymentCheckSuccessState({required this.payNow});
 }
 
-// class PaymentEntrySuccessState extends ArriveState {
+// class PaymentEntrySuccessState extends ParkingState {
 // }
 
-class ErrorState extends ArriveState {
+class ErrorState extends ParkingState {
   final String error;
   const ErrorState({required this.error});
 
 }
 
-class LoadingState extends ArriveState {
+class LoadingState extends ParkingState {
   final show;
   LoadingState(this.show);
 }
