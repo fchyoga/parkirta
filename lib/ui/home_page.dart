@@ -754,7 +754,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
                       },
                       style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
+                        backgroundColor: MaterialStateProperty.all<Color>(Red500),
                         foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
                         minimumSize: MaterialStateProperty.all<Size>(Size(120, 40)),
                         shape: MaterialStateProperty.all<RoundedRectangleBorder>(
