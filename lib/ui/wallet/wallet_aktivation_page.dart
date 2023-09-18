@@ -10,12 +10,12 @@ import 'package:parkirta/ui/submitted.dart';
 
 import 'dart:async';
 
-class AktivasiPage extends StatefulWidget {
+class WalletActivationPage extends StatefulWidget {
   @override
-  State<AktivasiPage> createState() => _AktivasiPageState();
+  State<WalletActivationPage> createState() => _WalletActivationPageState();
 }
 
-class _AktivasiPageState extends State<AktivasiPage> {
+class _WalletActivationPageState extends State<WalletActivationPage> {
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   File? _image;

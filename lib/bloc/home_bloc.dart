@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
+import 'package:parkirta/data/message/response/parking/parking_location_response.dart';
 import 'package:parkirta/data/message/response/parking/submit_arrive_response.dart';
 import 'package:parkirta/data/repository/parking_repository.dart';
 import 'package:parkirta/data/repository/user_repository.dart';
@@ -26,6 +27,18 @@ class HomeBloc extends Cubit<HomeState> {
       emit(ErrorState(error: response.message));
     }
   }
+
+  Future<void> getParkingLocation() async {
+    emit(LoadingState(true));
+    final response =
+        await _parkingRepository.parkingLocation();
+    emit(LoadingState(false));
+    if (response.success) {
+      emit(SuccessGetParkingLocationState(data: response.data));
+    } else {
+      emit(ErrorState(error: response.message));
+    }
+  }
 }
 
 abstract class HomeState {
@@ -35,6 +48,10 @@ abstract class HomeState {
 class Initial extends HomeState {
 }
 
+class SuccessGetParkingLocationState extends HomeState {
+  final List<ParkingLocation> data;
+  const SuccessGetParkingLocationState({required this.data});
+}
 class SuccessSubmitArrivalState extends HomeState {
   final SubmitArrival data;
   const SuccessSubmitArrivalState({required this.data});
