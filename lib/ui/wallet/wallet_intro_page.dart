@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:parkirta/color.dart';
-import 'package:parkirta/ui/aktivasi.dart';
+import 'package:parkirta/ui/wallet/wallet_aktivation_page.dart';
 import 'package:parkirta/ui/submitted.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-class WalletPage extends StatefulWidget {
+class WalletIntroPage extends StatefulWidget {
   @override
-  State<WalletPage> createState() => _WalletPageState();
+  State<WalletIntroPage> createState() => _WalletIntroPageState();
 }
 
-class _WalletPageState extends State<WalletPage> {
+class _WalletIntroPageState extends State<WalletIntroPage> {
   bool isLoading = true;
 
   @override
@@ -115,7 +115,7 @@ class _WalletPageState extends State<WalletPage> {
                     onPressed: () {
                         Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => AktivasiPage()),
+                        MaterialPageRoute(builder: (context) => WalletActivationPage()),
                       );
                     },
                     style: ButtonStyle(

@@ -54,6 +54,7 @@ class PaymentBloc extends Cubit<PaymentState> {
       emit(ErrorState(error: response.message));
     }
   }
+
 }
 
 abstract class PaymentState {

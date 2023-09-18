@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:parkirta/color.dart';
 import 'package:parkirta/main.dart';
-import 'package:parkirta/ui/wallet.dart';
-import 'package:parkirta/ui/dompet.dart';
 import 'package:parkirta/ui/home_page.dart';
 import 'package:parkirta/ui/submitted.dart';
 import 'package:http/http.dart' as http;
+import 'package:parkirta/ui/wallet/wallet_dashboard.dart';
+import 'package:parkirta/ui/wallet/wallet_intro_page.dart';
 import 'package:parkirta/utils/contsant/app_colors.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,7 +22,7 @@ class _MainPageState extends State<MainPage> {
   Map<String, dynamic> userData = {};
   late List<Widget> _pages = [
     HomePage(),
-    WalletPage(),
+    WalletIntroPage(),
   ];
 
   @override
@@ -46,13 +46,14 @@ class _MainPageState extends State<MainPage> {
         userData = jsonDecode(response.body)['data'];
         _pages = [
           HomePage(),
+
           if (userData['status_pelanggan'] == 'Aktif')
-            DompetPage()
+            WalletDashboardPage()
           else
             if (userData['foto_ktp'] != null)
               SubmittedPage()
             else
-              WalletPage(),
+              WalletIntroPage(),
         ];
       });
     } else {

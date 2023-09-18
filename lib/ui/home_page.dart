@@ -13,9 +13,11 @@ import 'package:http/http.dart' as http;
 import 'package:location/location.dart' as loc;
 import 'package:parkirta/bloc/home_bloc.dart';
 import 'package:parkirta/color.dart';
+import 'package:parkirta/data/message/response/parking/parking_location_response.dart';
 import 'package:parkirta/data/model/retribusi.dart';
 import 'package:parkirta/ui/api.dart';
 import 'package:parkirta/ui/profile.dart';
+import 'package:parkirta/utils/contsant/app_colors.dart';
 import 'package:parkirta/utils/contsant/transaction_const.dart';
 import 'package:parkirta/widget/card/card_timer.dart';
 import 'package:parkirta/widget/dialog/parking_timer_dialog.dart';
@@ -36,12 +38,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   late BuildContext _context;
   final _loadingDialog = LoadingDialog();
-  late GoogleMapController _mapController;
-  List<dynamic> _parkingLocations = [];
+  GoogleMapController? _mapController;
+  List<ParkingLocation> _parkingLocations = [];
   Set<Polyline> _polylines = {};
   Set<Marker> _myLocationMarker = {};
   LatLng _myLocation = LatLng(0, 0);
-  Map<String, dynamic>? selectedLocation;
+  ParkingLocation? selectedLocation;
   PolylinePoints polylinePoints = PolylinePoints();
   bool _isLoading = true;
   Polyline _polyline = Polyline(polylineId: PolylineId('route'), points: []);
@@ -84,6 +86,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       }
     });
     _loadParkIcon();
+    // _fetchParkingLocations();
+    _getUserLocation();
     WidgetsBinding.instance.addObserver(this);
     super.initState();
   }
@@ -98,7 +102,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    _mapController.dispose();
+    _mapController?.dispose();
     super.dispose();
   }
 
@@ -106,12 +110,15 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     // getLocalData();
     return BlocProvider(
-        create: (context) => HomeBloc()..initial,
+        create: (context) => HomeBloc()..getParkingLocation(),
         child: BlocListener<HomeBloc, HomeState>(
             listener: (context, state) async{
-              if (state is Initial) {
-              }else if (state is LoadingState) {
+              if (state is LoadingState) {
                 state.show ? _loadingDialog.show(context) : _loadingDialog.hide();
+              } else if (state is SuccessGetParkingLocationState) {
+                setState(() {
+                  _parkingLocations = state.data;
+                });
               } else if (state is SuccessSubmitArrivalState) {
                 SpUtil.putInt(RETRIBUTION_ID_ACTIVE, state.data.idRetribusiParkir);
                 await Navigator.pushNamed(
@@ -178,16 +185,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                             child: GoogleMap(
                               onMapCreated: _onMapCreated,
                               zoomControlsEnabled: false,
+                              myLocationButtonEnabled: true,
+                              mapToolbarEnabled: false,
                               mapType: MapType.normal,
                               initialCameraPosition: const CameraPosition(
                                 target: LatLng(-5.143648100120257, 119.48282708990482), // Ganti dengan posisi awal peta
                                 zoom: 20.0,
                               ),
                               markers: Set<Marker>.from(_parkingLocations.map((location) => Marker(
-                                markerId: MarkerId(location['id'].toString()),
+                                markerId: MarkerId(location.id.toString()),
                                 position: LatLng(
-                                  double.parse(location['lat']),
-                                  double.parse(location['long']),
+                                  double.parse(location.lat),
+                                  double.parse(location.long),
                                 ),
                                 icon: defaultIcon,
                                 onTap: () {
@@ -195,8 +204,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                 },
                               ))).union(_myLocationMarker),
                               polylines: _polylines,
-                              polygons: Set<Polygon>.from(_parkingLocations!.map((location) {
-                                List<String> areaLatLongStrings = location['area_latlong'].split('},{');
+                              polygons: Set<Polygon>.from(_parkingLocations.map((location) {
+                                List<String> areaLatLongStrings = location.areaLatlong.split('},{');
                                 List<LatLng> polygonCoordinates = areaLatLongStrings.map<LatLng>((areaLatLongString) {
                                   String latLngString = areaLatLongString.replaceAll('{', '').replaceAll('}', '');
                                   List<String> latLngList = latLngString.split(',');
@@ -208,7 +217,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                 }).toList();
 
                                 return Polygon(
-                                  polygonId: PolygonId(location['id'].toString()),
+                                  polygonId: PolygonId(location.id.toString()),
                                   points: polygonCoordinates,
                                   fillColor: Colors.blue.withOpacity(0.3),
                                   strokeColor: Colors.blue,
@@ -222,11 +231,49 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                             top: 16.0,
                             right: 16.0,
                             child: FloatingActionButton(
+                              backgroundColor: Colors.white,
                               onPressed: () {
                                 _cancelRoute();
                               },
-                              child: Icon(Icons.cancel_rounded),
+                              child: const Icon(Icons.cancel_rounded),
                             ),
+                          ),
+                          Positioned(
+                              bottom: 16.0,
+                              right: 16.0,
+                              child: InkWell(
+                                child: Container(
+                                  alignment: Alignment.center,
+                                  padding:  EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(10),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.01),
+                                        blurRadius: 5,
+                                        offset: const Offset(0, 12),),
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.05),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 7),),
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.09),
+                                        blurRadius: 3,
+                                        offset: const Offset(0, 3),),
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.10),
+                                        blurRadius: 2,
+                                        offset: const Offset(0, 1),),
+                                    ],
+
+                                  ),
+                                  child: const Icon(Icons.my_location_outlined, color: AppColors.textPassive,),
+                                ),
+                                onTap: () {
+                                  _mapController?.animateCamera(CameraUpdate.newLatLng(_myLocation));
+                                },
+                              )
                           ),
                           paymentStep == PAY_LATER && retribution!= null && parkingTime!= null ? Positioned(
                               top: 136,
@@ -354,33 +401,33 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
 
   Future<void> _getUserLocation() async {
-    loc.LocationData? _locationData;
-    perm.PermissionStatus _permissionStatus;
+    loc.LocationData? locationData;
+    perm.PermissionStatus permissionStatus;
 
     loc.Location location = loc.Location();
-    bool _serviceEnabled = await location.serviceEnabled();
-    if (!_serviceEnabled) {
-      _serviceEnabled = await location.requestService();
-      if (!_serviceEnabled) {
+    bool serviceEnabled = await location.serviceEnabled();
+    if (!serviceEnabled) {
+      serviceEnabled = await location.requestService();
+      if (!serviceEnabled) {
         // Handle if location service is not enabled
         return;
       }
     }
 
-    _permissionStatus = await perm.Permission.locationWhenInUse.status;
-    if (_permissionStatus.isDenied) {
-      _permissionStatus = await perm.Permission.locationWhenInUse.request();
-      if (_permissionStatus.isDenied) {
+    permissionStatus = await perm.Permission.locationWhenInUse.status;
+    if (permissionStatus.isDenied) {
+      permissionStatus = await perm.Permission.locationWhenInUse.request();
+      if (permissionStatus.isDenied) {
         // Handle if location permission is not granted
         return;
       }
     }
 
-    _locationData = await location.getLocation();
+    locationData = await location.getLocation();
     _startLocationUpdates();
     setState(() {
-      _myLocation = _locationData != null
-        ? LatLng(_locationData.latitude!, _locationData.longitude!)
+      _myLocation = locationData != null
+        ? LatLng(locationData.latitude!, locationData.longitude!)
         : LatLng(0, 0);
       _myLocationMarker = <Marker>{
         Marker(
@@ -392,27 +439,27 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       };
     });
 
-    _mapController.animateCamera(CameraUpdate.newLatLng(_myLocation));
+    _mapController?.animateCamera(CameraUpdate.newLatLng(_myLocation));
   }
 
-  Future<void> _fetchParkingLocations() async {
-    try {
-      List<dynamic> locations = await getLocations();
-      setState(() {
-        _parkingLocations = locations;
-      });
-    } catch (error, stackTrace) {
-      // Handle error fetching parking locations
-      debugPrintStack(label: 'Error fetching parking locations: $error',stackTrace: stackTrace);
-    }
-  }
+  // Future<void> _fetchParkingLocations() async {
+  //   try {
+  //     debugPrint("get parking");
+  //     List<dynamic> locations = await getLocations();
+  //     debugPrint("loc parking ${locations.length}");
+  //     setState(() {
+  //       _parkingLocations = locations;
+  //     });
+  //   } catch (error, stackTrace) {
+  //     // Handle error fetching parking locations
+  //     debugPrintStack(label: 'Error fetching parking locations: $error',stackTrace: stackTrace);
+  //   }
+  // }
 
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
     debugPrint("map created");
 
-    _fetchParkingLocations();
-    _getUserLocation();
     SchedulerBinding.instance.addPostFrameCallback((_) {
       if (_mapController != '') {
         setState(() {
@@ -432,13 +479,23 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
 
   
-  void _showParkingLocationPopup(BuildContext _context, Map<String, dynamic> location) {
+  void _showParkingLocationPopup(BuildContext _context, ParkingLocation location) {
     debugPrint("_showParkingLocationPopup");
-    String title = location['nama_lokasi'];
+    String title = location.namaLokasi;
     String fotoProfileUrl = 'assets/images/profile.png';
-    String namaJukir = location['relasi_jukir'][0]['jukir']['nama_lengkap'];
-    String statusJukir = location['relasi_jukir'][0]['jukir']['status_jukir'];
-    String statusParkir = location['status'];
+    if(location.relasiJukir.isEmpty){
+      showTopSnackBar(
+        context,
+        const CustomSnackBar.error(
+          message: "Jukir tidak tersedia dia area ini",
+        ),
+      );
+      return;
+    }
+
+    String namaJukir = location.relasiJukir[0].jukir.namaLengkap;
+    String statusJukir =  location.relasiJukir[0].jukir.statusJukir;
+    String statusParkir = location.status;
 
     showDialog(
       context: context,
@@ -487,7 +544,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   ),
                 ],
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -509,7 +566,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     child: Text(
                       statusParkir,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.normal,
                         color: Colors.white,
@@ -553,14 +610,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       return {}; // Return an empty set of markers while loading
     }
 
-    return _parkingLocations!.map((location) {
-      double lat = double.parse(location['lat']);
-      double lng = double.parse(location['long']);
+    return _parkingLocations.map((location) {
+      double lat = double.parse(location.lat);
+      double lng = double.parse(location.long);
 
       BitmapDescriptor icon = defaultIcon;
 
       return Marker(
-        markerId: MarkerId(location['id'].toString()),
+        markerId: MarkerId(location.id.toString()),
         position: LatLng(lat, lng),
         icon: icon,
         onTap: () {
@@ -570,7 +627,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }).toSet();
   }
 
-  void _showParkingInfo(BuildContext _context, Map<String, dynamic> location) {
+  void _showParkingInfo(BuildContext _context, ParkingLocation location) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -632,17 +689,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     );
   }
 
-  void _navigateToArrivePage(Map<String, dynamic> location) async {
+  void _navigateToArrivePage(ParkingLocation location) async {
     try {
       selectedLocation = location;
       // Mendapatkan koordinat tujuan (lokasi parkir)
-      LatLng destination = LatLng(double.parse(location['lat']), double.parse(location['long']));
+      LatLng destination = LatLng(double.parse(location.lat), double.parse(location.long));
 
       // Menggambar polyline antara posisi Anda saat ini dan lokasi parkir yang dipilih
       _updatePolyline(destination);
 
       // Konversi data polygon ke objek PolygonOptions
-      List<String> areaLatLongStrings = location['area_latlong'].split('},{');
+      List<String> areaLatLongStrings = location.areaLatlong.split('},{');
       List<LatLng> polygonCoordinates = areaLatLongStrings.map<LatLng>((areaLatLongString) {
         String latLngString = areaLatLongString.replaceAll('{', '').replaceAll('}', '');
         List<String> latLngList = latLngString.split(',');
@@ -673,7 +730,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      location['nama_lokasi'],
+                      location.namaLokasi,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -681,13 +738,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       ),
                     ),
                     SizedBox(height: 16),
-                    Text(location['alamat_lokasi']),
+                    Text(location.alamatLokasi),
                     SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () async {
                         int userId = await getUserId();
                         _context.read<HomeBloc>().submitArrival(
-                          location['id'].toString(),
+                          location.id.toString(),
                           userId.toString(),
                           _myLocation.latitude.toString(),
                           _myLocation.longitude.toString(),
@@ -697,7 +754,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
                       },
                       style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
+                        backgroundColor: MaterialStateProperty.all<Color>(Red500),
                         foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
                         minimumSize: MaterialStateProperty.all<Size>(Size(120, 40)),
                         shape: MaterialStateProperty.all<RoundedRectangleBorder>(

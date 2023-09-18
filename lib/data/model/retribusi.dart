@@ -2,6 +2,7 @@ import 'package:hive_flutter/adapters.dart';
 import 'package:parkirta/data/model/biaya_parkir.dart';
 import 'package:parkirta/data/model/lokasi_parkir.dart';
 import 'package:parkirta/data/model/member.dart';
+import 'package:parkirta/data/model/pembayaran.dart';
 
 part 'retribusi.g.dart';
 
@@ -52,6 +53,7 @@ class Retribusi {
     LokasiParkir? lokasiParkir;
     @HiveField(11)
     BiayaParkir? biayaParkir;
+    Pembayaran? pembayaran;
 
     Retribusi({
         required this.id,
@@ -76,6 +78,7 @@ class Retribusi {
         this.jukir,
         this.lokasiParkir,
         this.biayaParkir,
+        this.pembayaran,
     });
 
     factory Retribusi.fromJson(Map<String, dynamic> json) => Retribusi(
@@ -101,6 +104,7 @@ class Retribusi {
         jukir: json["jukir"],
         lokasiParkir: LokasiParkir.fromJson(json["lokasi_parkir"]),
         biayaParkir: json["biaya_parkir"]!=null ? BiayaParkir?.fromJson(json["biaya_parkir"]): null,
+        pembayaran: json["pembayaran"]!=null ? Pembayaran?.fromJson(json["pembayaran"]): null,
     );
 
     Map<String, dynamic> toJson() => {
@@ -126,5 +130,6 @@ class Retribusi {
         "jukir": jukir,
         "lokasi_parkir": lokasiParkir?.toJson(),
         "biaya_parkir": biayaParkir?.toJson(),
+        "pembayaran": pembayaran?.toJson(),
     };
 }
