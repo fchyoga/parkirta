@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:parkirta/bloc/auth_bloc.dart';
 import 'package:parkirta/color.dart';
 import 'package:parkirta/main.dart';
 import 'package:parkirta/ui/home_page.dart';
@@ -10,6 +12,8 @@ import 'package:parkirta/ui/wallet/wallet_intro_page.dart';
 import 'package:parkirta/utils/contsant/app_colors.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:top_snackbar_flutter/custom_snack_bar.dart';
+import 'package:top_snackbar_flutter/top_snack_bar.dart';
 
 class MainPage extends StatefulWidget {
   @override
@@ -19,6 +23,7 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   int _currentIndex = 0;
   HomePage? homePage;
+  late BuildContext _context;
   Map<String, dynamic> userData = {};
   late List<Widget> _pages = [
     HomePage(),
@@ -56,6 +61,12 @@ class _MainPageState extends State<MainPage> {
               WalletIntroPage(),
         ];
       });
+    }  else if (response.statusCode == 403) {
+      showTopSnackBar(_context, CustomSnackBar.error(
+        message: "Sesi anda telah habis. Silakan login kembali",
+      ));
+      _context.read<AuthenticationBloc>().authenticationExpiredEvent();
+      Navigator.pushNamedAndRemoveUntil(_context, "/", (route) => false);
     } else {
       print(response.body);
       throw Exception('Failed to fetch user data');
@@ -64,6 +75,7 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    _context = context;
     return Scaffold(
       key: NavigationService.navigatorKey,
       body: _pages[_currentIndex],

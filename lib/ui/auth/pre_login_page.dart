@@ -57,10 +57,9 @@ class _PreLoginPageState extends State<PreLoginPage> {
                   TextButton(
                     onPressed: () {
                       context.read<AuthenticationBloc>().unAuthenticatedEvent();
-                      Navigator.pushNamedAndRemoveUntil(
+                      Navigator.pushNamed(
                         context,
-                        "/",
-                        (route) => false,
+                        "/login",
                       );
                     },
                     style: ButtonStyle(

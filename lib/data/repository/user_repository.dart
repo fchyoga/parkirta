@@ -15,6 +15,7 @@ class UserRepository {
       };
       var response = await http.post(Uri.parse(Endpoint.urlLogin), body: data);
           // await http.post("login", data: loginRequest.toJson());
+      debugPrint("response ${response.body}");
       return response.statusCode == 200 ? loginResponseFromJson(response.body)
       : LoginResponse.withError( false, "Invalid email or password.");
     } on HttpException catch(e, stackTrace){
