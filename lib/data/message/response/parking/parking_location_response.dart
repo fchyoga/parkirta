@@ -36,7 +36,7 @@ class ParkingLocation {
     String alamatLokasi;
     String lat;
     String long;
-    String areaLatlong;
+    String? areaLatlong;
     String url;
     String status;
     String statusOperasional;
@@ -48,7 +48,7 @@ class ParkingLocation {
         required this.alamatLokasi,
         required this.lat,
         required this.long,
-        required this.areaLatlong,
+        this.areaLatlong,
         required this.url,
         required this.status,
         required this.statusOperasional,

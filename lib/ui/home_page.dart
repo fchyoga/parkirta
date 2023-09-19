@@ -15,7 +15,6 @@ import 'package:parkirta/bloc/home_bloc.dart';
 import 'package:parkirta/color.dart';
 import 'package:parkirta/data/message/response/parking/parking_location_response.dart';
 import 'package:parkirta/data/model/retribusi.dart';
-import 'package:parkirta/ui/api.dart';
 import 'package:parkirta/ui/profile.dart';
 import 'package:parkirta/utils/contsant/app_colors.dart';
 import 'package:parkirta/utils/contsant/transaction_const.dart';
@@ -204,8 +203,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                 },
                               ))).union(_myLocationMarker),
                               polylines: _polylines,
-                              polygons: Set<Polygon>.from(_parkingLocations.map((location) {
-                                List<String> areaLatLongStrings = location.areaLatlong.split('},{');
+                              polygons: Set<Polygon>.from(_parkingLocations.where((e) => e.areaLatlong!=null).toList().map((location) {
+                                List<String> areaLatLongStrings = location.areaLatlong!.split('},{');
                                 List<LatLng> polygonCoordinates = areaLatLongStrings.map<LatLng>((areaLatLongString) {
                                   String latLngString = areaLatLongString.replaceAll('{', '').replaceAll('}', '');
                                   List<String> latLngList = latLngString.split(',');
@@ -691,6 +690,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   void _navigateToArrivePage(ParkingLocation location) async {
     try {
+      if(location.areaLatlong==null) return;
       selectedLocation = location;
       // Mendapatkan koordinat tujuan (lokasi parkir)
       LatLng destination = LatLng(double.parse(location.lat), double.parse(location.long));
@@ -699,7 +699,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       _updatePolyline(destination);
 
       // Konversi data polygon ke objek PolygonOptions
-      List<String> areaLatLongStrings = location.areaLatlong.split('},{');
+      List<String> areaLatLongStrings = location.areaLatlong!.split('},{');
       List<LatLng> polygonCoordinates = areaLatLongStrings.map<LatLng>((areaLatLongString) {
         String latLngString = areaLatLongString.replaceAll('{', '').replaceAll('}', '');
         List<String> latLngList = latLngString.split(',');
