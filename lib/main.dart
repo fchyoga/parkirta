@@ -180,7 +180,7 @@ late AndroidNotificationChannel channel;
 bool isFlutterLocalNotificationsInitialized = false;
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  showFlutterNotification(message);
+
 
 
   // If you're going to use other Firebase services in the background, such as Firestore,
@@ -237,28 +237,5 @@ Future<void> setupFlutterNotifications() async {
   isFlutterLocalNotificationsInitialized = true;
 }
 
-void showFlutterNotification(RemoteMessage message) {
-  print("notification masuk ${message.notification?.title} ${message.notification?.body}");
-  RemoteNotification? notification = message.notification;
-  AndroidNotification? android = message.notification?.android;
-  if (notification != null && android != null) {
-    flutterLocalNotificationsPlugin.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
-      NotificationDetails(
-          android: AndroidNotificationDetails(
-            channel.id,
-            channel.name,
-            channelDescription: channel.description,
-            // TODO add a proper drawable resource to android, for now using
-            //      one that already exists in example app.
-            icon: '@mipmap/logo',
-          ),
-          iOS: const IOSNotificationDetails(presentAlert: true, presentBadge: true, presentSound: true)
-      ),
-    );
-  }
-}
 
 late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;

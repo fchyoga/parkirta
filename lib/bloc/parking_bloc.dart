@@ -49,13 +49,13 @@ class ParkingBloc extends Cubit<ParkingState> {
     final response =
     await _paymentRepository.paymentChoice(retributionId, payNow);
     emit(LoadingState(false));
-    emit(PaymentCheckSuccessState(payNow: payNow));
+    // emit(PaymentCheckSuccessState(payNow: payNow));
 
-    // if (response.success) {
-    //   emit(PaymentCheckSuccessState(payNow: payNow));
-    // } else {
-    //   emit(ErrorState(error: response.message));
-    // }
+    if (response.success) {
+      emit(PaymentCheckSuccessState(payNow: payNow));
+    } else {
+      emit(ErrorState(error: response.message));
+    }
   }
 
 
