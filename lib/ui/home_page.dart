@@ -50,6 +50,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   String? paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
   Retribusi? retribution;
   DateTime? parkingTime;
+  CardTimer? cardTimer;
 
   // Add the code for parkIcon here
   late BitmapDescriptor parkIcon;
@@ -69,18 +70,23 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void initState(){
     Timer(const Duration(seconds: 1), () async{
       getLocalData();
-      // SpUtil.putInt(RETRIBUTION_ID_ACTIVE, 58);
+      // SpUtil.putInt(RETRIBUTION_ID_ACTIVE, 99);
+      // SpUtil.remove(RETRIBUTION_ID_ACTIVE);
+      // SpUtil.remove(PAYMENT_STEP);
       var retributionActive = SpUtil.getInt(RETRIBUTION_ID_ACTIVE, defValue: null);
       // if(retributionActive!=null){
       if(retributionActive!=null && paymentStep!=PAY_LATER){
-        await Navigator.pushNamed(
+        var paymentChoice = await Navigator.pushNamed(
             _context,
             "/arrive",
           arguments: retributionActive
         );
-        setState(() {
-          paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
-        });
+        if(paymentChoice is String){
+          setState(() {
+            paymentStep = paymentChoice;
+          });
+          getLocalData();
+        }
 
       }
     });
@@ -120,12 +126,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 });
               } else if (state is SuccessSubmitArrivalState) {
                 SpUtil.putInt(RETRIBUTION_ID_ACTIVE, state.data.idRetribusiParkir);
-                await Navigator.pushNamed(
+                var paymentChoice = await Navigator.pushNamed(
                     context,
                     "/arrive",
                     arguments: state.data.idRetribusiParkir
                 );
-                getLocalData();
+                if(paymentChoice is String){
+                  setState(() {
+                    paymentStep = paymentChoice;
+                  });
+                  getLocalData();
+                }
 
               } else if (state is ErrorState) {
                 showTopSnackBar(
@@ -274,32 +285,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                 },
                               )
                           ),
-                          paymentStep == PAY_LATER && retribution!= null && parkingTime!= null ? Positioned(
+                          Positioned(
                               top: 136,
                               right: 16,
-                              child: CardTimer(dateTime: parkingTime, onClick:  (value){
-                                showDialog(context: context, builder: (_) =>
-                                    ParkingTimerDialog(
-                                      entryDate: parkingTime!,
-                                      duration: value,
-                                      name: retribution!.pelanggan?.namaLengkap ?? "-",
-                                      policeNumber: retribution!.nopol ?? "-",
-                                      location: retribution!.lokasiParkir?.namaLokasi ?? "-",
-                                      address:retribution!.lokasiParkir?.alamatLokasi ?? "-",
-                                      price: (retribution!.biayaParkir?.biayaParkir ?? 0).toString(),
-                                      onClickStop: (){
-                                        debugPrint("cekkk $parkingTime $value");
-                                        Navigator.pushNamed(_context, "/payment", arguments: {
-                                          "retribusi": retribution,
-                                          "jam": parkingTime,
-                                          "durasi": DateTime.now().difference(parkingTime!),
-                                          PAYMENT_STEP: PAY_LATER
-                                        });
-                                      },
-                                    )
-                                );
-                              })
-                          ): Container(),
+                              child: cardTimer ?? Container()
+                          )
 
                         ],
                       )
@@ -816,6 +806,31 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
+  CardTimer buildCardTimer(BuildContext context, DateTime? parkingTime, Retribusi retribution){
+    return  CardTimer(dateTime: parkingTime, onClick:  (value){
+      showDialog(context: context, builder: (_) =>
+          ParkingTimerDialog(
+            entryDate: parkingTime!,
+            duration: value,
+            name: retribution.pelanggan?.namaLengkap ?? "-",
+            policeNumber: retribution.nopol ?? "-",
+            location: retribution.lokasiParkir?.namaLokasi ?? "-",
+            address:retribution.lokasiParkir?.alamatLokasi ?? "-",
+            price: (retribution.biayaParkir?.biayaParkir ?? 0).toString(),
+            onClickStop: (){
+              debugPrint("cekkk $parkingTime $value");
+              Navigator.pushNamed(_context, "/payment", arguments: {
+                "retribusi": retribution,
+                "jam": parkingTime,
+                "durasi": DateTime.now().difference(parkingTime!),
+                PAYMENT_STEP: PAY_LATER
+              });
+            },
+          )
+      );
+    });
+  }
+
   void _cancelRoute() {
     setState(() {
       _polylines.remove(_polyline);
@@ -829,9 +844,15 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       retribution = retributions.getAt(0);
       parkingTime = retribution?.createdAt;
       debugPrint("getLocalData $parkingTime ${retributions.getAt(0)?.toJson()}");
+
     }
     setState(() {
       paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
+      if(paymentStep == PAY_LATER && parkingTime!= null) {
+        cardTimer = buildCardTimer(_context, parkingTime, retribution!);
+      } else {
+        cardTimer = null;
+      }
     });
   }
 
