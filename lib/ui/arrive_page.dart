@@ -275,10 +275,10 @@ class _ArrivePageState extends State<ArrivePage> {
          ),
          const SizedBox(height: 50,),
          ButtonDefault(title: "Bayar Nanti", color: AppColors.greenLight, textColor: AppColors.green, onTap: () async{
-           // context.read<ParkingBloc>().paymentChoice(retributionId, PAY_LATER_CODE);
+           context.read<ParkingBloc>().paymentChoice(retributionId, PAY_LATER_CODE);
 
-           await SpUtil.putString(PAYMENT_STEP, PAY_LATER);
-           Navigator.of(context).pop(PAY_LATER);
+           // await SpUtil.putString(PAYMENT_STEP, PAY_LATER);
+           // Navigator.of(context).pop(PAY_LATER);
          }),
          const SizedBox(height: 10,),
          ButtonDefault(title: "Bayar Sekarang", color: AppColors.green, onTap: (){

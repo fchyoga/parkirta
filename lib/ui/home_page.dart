@@ -101,6 +101,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     print("Lifecycle State --> ${state} ");
     if(state == AppLifecycleState.resumed){
+      setState(() {
+        paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
+      });
       getLocalData();
     }
   }

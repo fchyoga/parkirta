@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:parkirta/bloc/parking_bloc.dart';
 import 'package:parkirta/data/model/retribusi.dart';
 import 'package:parkirta/utils/contsant/app_colors.dart';
@@ -27,6 +28,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
   @override
   Widget build(BuildContext context) {
     var id = ModalRoute.of(context)?.settings.arguments as int?;
+    clearActiveParkingData();
     return BlocProvider(
         create: (context) => ParkingBloc()..checkDetailParking(id.toString()),
         child: BlocListener<ParkingBloc, ParkingState>(
@@ -102,6 +104,14 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
             )
         )
     );
+  }
+
+  Future<void> clearActiveParkingData() async{
+    var retributions = await Hive.openBox<Retribusi>(RETRIBUTION_BOX);
+    if(retributions.isNotEmpty) retributions.deleteAt(0);
+    SpUtil.remove(RETRIBUTION_ID_ACTIVE);
+    SpUtil.remove(PAYMENT_STEP);
+    SpUtil.remove(INVOICE_ACTIVE);
   }
 
 }

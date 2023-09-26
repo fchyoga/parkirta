@@ -98,8 +98,6 @@ class _MainAppState extends State<AppView> {
       if(topicKey == PARKING_ACCEPTED){
         Navigator.pushReplacementNamed(NavigationService.navigatorKey.currentContext!,'/arrive', arguments: int.tryParse(message.data["id"]));
       }else if(topicKey == PAYMENT_COMPLETE){
-        SpUtil.remove(RETRIBUTION_ID_ACTIVE);
-        SpUtil.remove(INVOICE_ACTIVE);
         Navigator.pushNamed(NavigationService.navigatorKey.currentContext!,'/payment_success', arguments: int.tryParse(message.data["id"]));
       }
 
@@ -110,8 +108,6 @@ class _MainAppState extends State<AppView> {
       if(message.data["topic_key"] == PARKING_ACCEPTED && NavigationService.navigatorKey.currentContext!=null){
         Navigator.pushNamed(NavigationService.navigatorKey.currentContext!,'/arrive', arguments: int.tryParse(message.data["id"]));
       }else if(message.data["topic_key"] == PAYMENT_COMPLETE && NavigationService.navigatorKey.currentContext!=null){
-        SpUtil.remove(RETRIBUTION_ID_ACTIVE);
-        SpUtil.remove(INVOICE_ACTIVE);
         Navigator.pushNamed(NavigationService.navigatorKey.currentContext!,'/payment_success', arguments: int.tryParse(message.data["id"]));
       }
 
