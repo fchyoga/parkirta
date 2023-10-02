@@ -28,7 +28,6 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
   @override
   Widget build(BuildContext context) {
     var id = ModalRoute.of(context)?.settings.arguments as int?;
-    clearActiveParkingData();
     return BlocProvider(
         create: (context) => ParkingBloc()..checkDetailParking(id.toString()),
         child: BlocListener<ParkingBloc, ParkingState>(
@@ -36,6 +35,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
               if (state is LoadingState) {
                 state.show ? _loadingDialog.show(context) : _loadingDialog.hide();
               } else if (state is CheckDetailParkingSuccessState) {
+                updateParkingData(state.data.retribusi);
                 setState(() {
                   retribution = state.data.retribusi;
                 });
@@ -106,12 +106,12 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
     );
   }
 
-  Future<void> clearActiveParkingData() async{
+  Future<void> updateParkingData(Retribusi retribution) async{
     var retributions = await Hive.openBox<Retribusi>(RETRIBUTION_BOX);
-    if(retributions.isNotEmpty) retributions.deleteAt(0);
-    SpUtil.remove(RETRIBUTION_ID_ACTIVE);
-    SpUtil.remove(PAYMENT_STEP);
-    SpUtil.remove(INVOICE_ACTIVE);
+    retributions.put(0, retribution);
+    // SpUtil.remove(RETRIBUTION_ID_ACTIVE);
+    // SpUtil.remove(PAYMENT_STEP);
+    // SpUtil.remove(INVOICE_ACTIVE);
   }
 
 }

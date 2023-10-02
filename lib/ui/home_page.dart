@@ -17,6 +17,8 @@ import 'package:parkirta/data/message/response/parking/parking_location_response
 import 'package:parkirta/data/model/retribusi.dart';
 import 'package:parkirta/ui/profile.dart';
 import 'package:parkirta/utils/contsant/app_colors.dart';
+import 'package:parkirta/utils/contsant/parking_status.dart';
+import 'package:parkirta/utils/contsant/payment_choice.dart';
 import 'package:parkirta/utils/contsant/transaction_const.dart';
 import 'package:parkirta/widget/card/card_timer.dart';
 import 'package:parkirta/widget/dialog/parking_timer_dialog.dart';
@@ -47,7 +49,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool _isLoading = true;
   Polyline _polyline = Polyline(polylineId: PolylineId('route'), points: []);
   loc.Location _location = loc.Location();
-  String? paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
+  String? paymentChoice = SpUtil.getString(PAYMENT_CHOICE, defValue: null);
   Retribusi? retribution;
   DateTime? parkingTime;
   CardTimer? cardTimer;
@@ -70,12 +72,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void initState(){
     Timer(const Duration(seconds: 1), () async{
       getLocalData();
-      // SpUtil.putInt(RETRIBUTION_ID_ACTIVE, 99);
+      SpUtil.putInt(RETRIBUTION_ID_ACTIVE, 105);
+      paymentChoice = PaymentChoice.payLater.name;
       // SpUtil.remove(RETRIBUTION_ID_ACTIVE);
       // SpUtil.remove(PAYMENT_STEP);
       var retributionActive = SpUtil.getInt(RETRIBUTION_ID_ACTIVE, defValue: null);
       // if(retributionActive!=null){
-      if(retributionActive!=null && paymentStep!=PAY_LATER){
+      if(retributionActive!=null && paymentChoice!=null){
         var paymentChoice = await Navigator.pushNamed(
             _context,
             "/arrive",
@@ -83,7 +86,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         );
         if(paymentChoice is String){
           setState(() {
-            paymentStep = paymentChoice;
+            paymentChoice = paymentChoice;
           });
           getLocalData();
         }
@@ -102,7 +105,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     print("Lifecycle State --> ${state} ");
     if(state == AppLifecycleState.resumed){
       setState(() {
-        paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
+        paymentChoice = SpUtil.getString(PAYMENT_CHOICE, defValue: null);
       });
       getLocalData();
     }
@@ -136,7 +139,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 );
                 if(paymentChoice is String){
                   setState(() {
-                    paymentStep = paymentChoice;
+                    paymentChoice = paymentChoice;
                   });
                   getLocalData();
                 }
@@ -826,7 +829,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 "retribusi": retribution,
                 "jam": parkingTime,
                 "durasi": DateTime.now().difference(parkingTime!),
-                PAYMENT_STEP: PAY_LATER
+                PAYMENT_CHOICE: paymentChoice
               });
             },
           )
@@ -843,20 +846,31 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   Future<void> getLocalData() async{
     var retributions = await Hive.openBox<Retribusi>('retribusiBox');
-    if(retributions.isNotEmpty){
+    debugPrint("getLocalData $parkingTime ${retributions.length}");
+    if(retributions.isNotEmpty && retributions.getAt(0)?.statusParkir == ParkingStatus.telahKeluar.name) {
+      retributions.clear();
+      SpUtil.remove(RETRIBUTION_ID_ACTIVE);
+      SpUtil.remove(PAYMENT_STEP);
+      SpUtil.remove(INVOICE_ACTIVE);
+      retribution = null;
+      parkingTime = null;
+      debugPrint("remove LocalData $parkingTime ${retribution}");
+    }else if(retributions.isNotEmpty){
       retribution = retributions.getAt(0);
       parkingTime = retribution?.createdAt;
       debugPrint("getLocalData $parkingTime ${retributions.getAt(0)?.toJson()}");
 
     }
     setState(() {
-      paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
-      if(paymentStep == PAY_LATER && parkingTime!= null) {
+      paymentChoice = SpUtil.getString(PAYMENT_STEP, defValue: null);
+      if(paymentChoice == PAY_LATER && parkingTime!= null) {
         cardTimer = buildCardTimer(_context, parkingTime, retribution!);
       } else {
         cardTimer = null;
       }
     });
   }
+
+
 
 }

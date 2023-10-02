@@ -9,6 +9,7 @@ import 'package:parkirta/bloc/parking_bloc.dart';
 import 'package:parkirta/color.dart';
 import 'package:parkirta/data/message/response/parking/parking_check_detail_response.dart';
 import 'package:parkirta/utils/contsant/app_colors.dart';
+import 'package:parkirta/utils/contsant/payment_choice.dart';
 import 'package:parkirta/utils/contsant/transaction_const.dart';
 import 'package:parkirta/widget/button/button_default.dart';
 import 'package:parkirta/widget/loading_dialog.dart';
@@ -74,19 +75,20 @@ class _ArrivePageState extends State<ArrivePage> {
                     )
                   ];
                 });
-              } else if (state is PaymentCheckSuccessState) {
-                debugPrint("pay now ${state.payNow}");
-                if(state.payNow == PAY_NOW_CODE){
-                  Navigator.pushNamed(context, "/payment", arguments: {
-                    "retribusi": parkingCheckDetail?.retribusi,
-                    "jam": timeSelected,
-                    "durasi": duration,
-                    PAYMENT_STEP: PAY_NOW
-                  });
-                }else{
-                  await SpUtil.putString(PAYMENT_STEP, PAY_LATER);
-                  Navigator.of(context).pop(PAY_LATER);
-                }
+              // } else if (state is PaymentCheckSuccessState) {
+              //   debugPrint("pay now ${state.payNow}");
+              //   if(state.payNow == PAY_NOW_CODE){
+              //     await SpUtil.putString(PAYMENT_STEP, PAY_LATER);
+              //     Navigator.pushNamed(context, "/payment", arguments: {
+              //       "retribusi": parkingCheckDetail?.retribusi,
+              //       "jam": timeSelected,
+              //       "durasi": duration,
+              //       PAYMENT_STEP: PAY_NOW
+              //     });
+              //   }else{
+              //     await SpUtil.putString(PAYMENT_STEP, PAY_LATER);
+              //     Navigator.of(context).pop(PAY_LATER);
+              //   }
               } else if (state is CancelParkingSuccessState) {
                 showTopSnackBar(
                   context,
@@ -169,8 +171,7 @@ class _ArrivePageState extends State<ArrivePage> {
                       body: Stack(
                         alignment: Alignment.bottomCenter,
                         children: [
-                          parkingCheckDetail?.retribusi.lat != null? Expanded(
-                            child: GoogleMap(
+                          parkingCheckDetail?.retribusi.lat != null? GoogleMap(
                               mapType: MapType.normal,
                               zoomControlsEnabled: false,
                               initialCameraPosition:  CameraPosition(
@@ -181,11 +182,13 @@ class _ArrivePageState extends State<ArrivePage> {
                                 zoom: 15.0,
                               ),
                               markers: Set<Marker>.from(markers),
-                            ),
                           ): Container(),
                           parkingCheckDetail?.retribusi.idJukir == null ? Container(
                             color: Colors.white,
                             height: 200,
+                            constraints: const BoxConstraints(
+                              maxHeight: 200
+                            ),
                             alignment: Alignment.center,
                             child: const Column(
                               mainAxisSize: MainAxisSize.min,
@@ -275,10 +278,10 @@ class _ArrivePageState extends State<ArrivePage> {
          ),
          const SizedBox(height: 50,),
          ButtonDefault(title: "Bayar Nanti", color: AppColors.greenLight, textColor: AppColors.green, onTap: () async{
-           context.read<ParkingBloc>().paymentChoice(retributionId, PAY_LATER_CODE);
+           // context.read<ParkingBloc>().paymentChoice(retributionId, PAY_LATER_CODE);
 
-           // await SpUtil.putString(PAYMENT_STEP, PAY_LATER);
-           // Navigator.of(context).pop(PAY_LATER);
+           await SpUtil.putString(PAYMENT_CHOICE, PaymentChoice.payLater.name);
+           Navigator.of(context).pop(PAYMENT_CHOICE);
          }),
          const SizedBox(height: 10,),
          ButtonDefault(title: "Bayar Sekarang", color: AppColors.green, onTap: (){
@@ -319,6 +322,7 @@ class _ArrivePageState extends State<ArrivePage> {
          ButtonDefault(title: timeSelected ?? "Pilih Jam", color: AppColors.cardGrey, textColor: AppColors.text, onTap: () async{
            TimeOfDay? pickedTime =  await showTimePicker(
              initialTime: TimeOfDay.now(),
+             initialEntryMode: TimePickerEntryMode.inputOnly,
              context: context, //context of current state
            );
 
@@ -332,7 +336,7 @@ class _ArrivePageState extends State<ArrivePage> {
              setState(() {
                timeSelected = "${pickedTime.hour}:${pickedTime.minute}";
                duration = now.difference(parkingCheckDetail!.retribusi.createdAt);
-               print("duration is ${ duration?.inHours.toString()},${ duration?.inMinutes.remainder(60).toString()}");
+               print("duration is ${ duration?.inHours.toString()},${duration?.inMinutes.toString()} ${ duration?.inMinutes.remainder(60).toString()}");
              });
            }else{
              print("Time is not selected");
@@ -340,7 +344,6 @@ class _ArrivePageState extends State<ArrivePage> {
          }),
          const SizedBox(height: 20,),
          Row(
-
            crossAxisAlignment: CrossAxisAlignment.start,
            mainAxisAlignment: MainAxisAlignment.spaceBetween,
            children: [
@@ -375,11 +378,14 @@ class _ArrivePageState extends State<ArrivePage> {
              );
            }else{
 
-             context.read<ParkingBloc>().paymentChoice(retributionId, PAY_NOW_CODE);
-             // Navigator.pushNamed(context, "/payment", arguments: {
-             //   "retribusi": parkingCheckDetail?.retribusi,
-             //   "jam": timeSelected
-             // });
+             // context.read<ParkingBloc>().paymentChoice(retributionId, PAY_NOW_CODE);
+             SpUtil.putString(PAYMENT_CHOICE, PaymentChoice.payNow.name);
+             Navigator.pushNamed(context, "/payment", arguments: {
+               "retribusi": parkingCheckDetail?.retribusi,
+               "jam": timeSelected,
+               "durasi": duration,
+               PAYMENT_CHOICE: PaymentChoice.payNow.name
+             });
            }
          }),
        ],

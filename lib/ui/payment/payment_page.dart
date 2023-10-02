@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screen_lock/flutter_screen_lock.dart';
 import 'package:parkirta/bloc/payment_bloc.dart';
 import 'package:parkirta/utils/contsant/app_colors.dart';
+import 'package:parkirta/utils/contsant/payment_choice.dart';
+import 'package:parkirta/utils/contsant/payment_step.dart';
 import 'package:parkirta/utils/contsant/transaction_const.dart';
 import 'package:parkirta/widget/button/button_default.dart';
 import 'package:parkirta/widget/loading_dialog.dart';
@@ -29,7 +31,8 @@ class _PaymentPageState extends State<PaymentPage> {
   late BuildContext _context;
   Retribusi? retribution;
   Duration? duration;
-  String? paymentStep;
+  String? paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
+  String? paymentChoice = SpUtil.getString(PAYMENT_CHOICE, defValue: null);
 
 
   @override
@@ -45,16 +48,26 @@ class _PaymentPageState extends State<PaymentPage> {
         create: (context) => PaymentBloc(),
         child: BlocListener<PaymentBloc, PaymentState>(
             listener: (context, state) async{
-              if (state is LoadingState) {
+              if (state is PaymentChoiceSuccessState) {
+                SpUtil.putString(PAYMENT_STEP, PaymentStep.paymentChoice.name);
+                paymentStep =  PaymentStep.paymentChoice.name;
+              } else if (state is LoadingState) {
                 state.show ? _loadingDialog.show(context) : _loadingDialog.hide();
               // } else if (state is CheckDetailParkingSuccessState) {
               } else if (state is PaymentEntrySuccessState) {
+                SpUtil.putString(PAYMENT_STEP, PaymentStep.paymentEntry.name);
+                paymentStep =  PaymentStep.paymentEntry.name;
                 if(!state.viaJukir) {
                   openKeyPad(state.paymentInfo.noInvoice);
                 }else{
                   showBottomSheetWaiting(context);
                 }
+              } else if (state is PaymentCheckoutSuccessState) {
+                SpUtil.putString(PAYMENT_STEP, PaymentStep.paymentCheckout.name);
+                paymentStep =  PaymentStep.paymentCheckout.name;
               } else if (state is LeaveParkingSuccessState) {
+                SpUtil.putString(PAYMENT_STEP, PaymentStep.parkingLeave.name);
+                paymentStep =  PaymentStep.parkingLeave.name;
                 if(!state.viaJukir) {
                   openKeyPad(state.paymentInfo.noInvoice);
                 }else{
@@ -265,8 +278,8 @@ class _PaymentPageState extends State<PaymentPage> {
 
   String? getDurationString(){
     if(duration!=null){
-      var minutes = duration!.inMinutes.remainder(60) == 0 ? "01" :duration!.inMinutes.remainder(60).toString().padLeft(2, '0');
-      return "${duration!.inHours}:$minutes";
+      var minutes = duration!.inMinutes.remainder(60) == 0 ? "1" :duration!.inMinutes.remainder(60).toString();
+      return "${duration!.inHours} jam $minutes menit";
     }else{
       return null;
     }

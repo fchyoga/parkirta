@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:parkirta/data/message/response/parking/parking_check_detail_response.dart';
 import 'package:parkirta/data/message/response/payment/payment_entry_response.dart';
 import 'package:parkirta/data/repository/parking_repository.dart';
@@ -14,6 +15,21 @@ class PaymentBloc extends Cubit<PaymentState> {
   ParkingRepository _parkingRepository = ParkingRepository();
 
   PaymentBloc() : super(ArriveInitial());
+
+  Future<void> paymentChoice(int retributionId, int payNow) async {
+    debugPrint("pay now $payNow");
+    emit(LoadingState(true));
+    final response =
+    await _paymentRepository.paymentChoice(retributionId, payNow);
+    emit(LoadingState(false));
+    // emit(paymentChoiceSuccessState(payNow: payNow));
+
+    if (response.success) {
+      emit(PaymentChoiceSuccessState(payNow: payNow));
+    } else {
+      emit(ErrorState(error: response.message));
+    }
+  }
 
   Future<void> paymentEntry(int retributionId, int totalHours, int viaJukir) async {
     emit(LoadingState(true));
@@ -64,12 +80,10 @@ abstract class PaymentState {
 class ArriveInitial extends PaymentState {
 }
 
-class LeaveParkingSuccessState extends PaymentState {
-  final bool viaJukir;
-  final PaymentEntry paymentInfo;
-  const LeaveParkingSuccessState({required this.viaJukir, required this.paymentInfo});
+class PaymentChoiceSuccessState extends PaymentState {
+  final int payNow;
+  const PaymentChoiceSuccessState({required this.payNow});
 }
-
 
 class PaymentEntrySuccessState extends PaymentState {
   final bool viaJukir;
@@ -79,8 +93,17 @@ class PaymentEntrySuccessState extends PaymentState {
 
 class PaymentCheckoutSuccessState extends PaymentState {
   // final ParkingCheckDetail data;
-  // const PaymentCheckSuccessState({required this.data});
+  // const paymentChoiceSuccessState({required this.data});
 }
+
+class LeaveParkingSuccessState extends PaymentState {
+  final bool viaJukir;
+  final PaymentEntry paymentInfo;
+  const LeaveParkingSuccessState({required this.viaJukir, required this.paymentInfo});
+}
+
+
+
 
 class ErrorState extends PaymentState {
   final String error;

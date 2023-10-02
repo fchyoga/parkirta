@@ -43,20 +43,20 @@ class ParkingBloc extends Cubit<ParkingState> {
     }
   }
 
-  Future<void> paymentChoice(int retributionId, int payNow) async {
-    debugPrint("pay now $payNow");
-    emit(LoadingState(true));
-    final response =
-    await _paymentRepository.paymentChoice(retributionId, payNow);
-    emit(LoadingState(false));
-    // emit(PaymentCheckSuccessState(payNow: payNow));
-
-    if (response.success) {
-      emit(PaymentCheckSuccessState(payNow: payNow));
-    } else {
-      emit(ErrorState(error: response.message));
-    }
-  }
+  // Future<void> paymentChoice(int retributionId, int payNow) async {
+  //   debugPrint("pay now $payNow");
+  //   emit(LoadingState(true));
+  //   final response =
+  //   await _paymentRepository.paymentChoice(retributionId, payNow);
+  //   emit(LoadingState(false));
+  //   // emit(PaymentCheckSuccessState(payNow: payNow));
+  //
+  //   if (response.success) {
+  //     emit(PaymentCheckSuccessState(payNow: payNow));
+  //   } else {
+  //     emit(ErrorState(error: response.message));
+  //   }
+  // }
 
 
   // Future<void> paymentEntry(int retributionId, int totalHours, int viaJukir) async {
@@ -87,10 +87,10 @@ class CheckDetailParkingSuccessState extends ParkingState {
 class  CancelParkingSuccessState extends ParkingState {
 }
 
-class PaymentCheckSuccessState extends ParkingState {
-  final int payNow;
-  const PaymentCheckSuccessState({required this.payNow});
-}
+// class PaymentCheckSuccessState extends ParkingState {
+//   final int payNow;
+//   const PaymentCheckSuccessState({required this.payNow});
+// }
 
 // class PaymentEntrySuccessState extends ParkingState {
 // }
