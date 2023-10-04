@@ -169,23 +169,24 @@ class _ArrivePageState extends State<ArrivePage> {
                       body: Stack(
                         alignment: Alignment.bottomCenter,
                         children: [
-                          parkingCheckDetail?.retribusi.lat != null? Expanded(
-                            child: GoogleMap(
-                              mapType: MapType.normal,
-                              zoomControlsEnabled: false,
-                              initialCameraPosition:  CameraPosition(
-                                target: LatLng(
-                                  double.parse(parkingCheckDetail!.retribusi.lat),
-                                  double.parse(parkingCheckDetail!.retribusi.long),
-                                ),
-                                zoom: 15.0,
+                          parkingCheckDetail?.retribusi.lat != null? GoogleMap(
+                            mapType: MapType.normal,
+                            zoomControlsEnabled: false,
+                            initialCameraPosition:  CameraPosition(
+                              target: LatLng(
+                                double.parse(parkingCheckDetail!.retribusi.lat),
+                                double.parse(parkingCheckDetail!.retribusi.long),
                               ),
-                              markers: Set<Marker>.from(markers),
+                              zoom: 15.0,
                             ),
-                          ): Container(),
+                            markers: Set<Marker>.from(markers),
+                          ) : Container(),
                           parkingCheckDetail?.retribusi.idJukir == null ? Container(
                             color: Colors.white,
                             height: 200,
+                            constraints: const BoxConstraints(
+                              maxHeight: 200
+                            ),
                             alignment: Alignment.center,
                             child: const Column(
                               mainAxisSize: MainAxisSize.min,
