@@ -1,0 +1,19 @@
+Alur Pembayaran :
+1. Bayar Sekarang
+	1st Payment
+	- Parking Arrive
+	- Upload Foto Kendaraan
+	- Payment Choice (is_pay_now = 1)
+	- Payment Entry
+	- Payment Checkout / Jukir
+
+	2nd Payment
+	- Parking Leave
+	- Payment Checkout / Jukir
+
+2. Bayar Nanti
+	- Parking Arrive
+	- Upload Foto Kendaraan
+	- Payment Choice (is_pay_now = 0)
+	- Parking Leave
+	- Payment Checkout / Jukir
