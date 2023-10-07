@@ -6,6 +6,9 @@ import 'package:parkirta/data/message/response/payment/payment_entry_response.da
 import 'package:parkirta/data/repository/parking_repository.dart';
 import 'package:parkirta/data/repository/payment_repository.dart';
 import 'package:parkirta/data/repository/user_repository.dart';
+import 'package:parkirta/utils/contsant/payment_choice.dart';
+import 'package:parkirta/utils/contsant/payment_methode.dart';
+import 'package:parkirta/utils/contsant/payment_step.dart';
 import 'package:parkirta/utils/contsant/transaction_const.dart';
 import 'package:parkirta/utils/contsant/user_const.dart';
 import 'package:sp_util/sp_util.dart';
@@ -13,25 +16,30 @@ import 'package:sp_util/sp_util.dart';
 class PaymentBloc extends Cubit<PaymentState> {
   PaymentRepository _paymentRepository = PaymentRepository();
   ParkingRepository _parkingRepository = ParkingRepository();
+  final int retributionId;
+  PaymentBloc(this.retributionId) : super(ArriveInitial()){
+    var paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
+    debugPrint("payment step ${paymentStep}");
+    if(paymentStep == null){
+      paymentChoice();
+    }
+  }
 
-  PaymentBloc() : super(ArriveInitial());
-
-  Future<void> paymentChoice(int retributionId, int payNow) async {
-    debugPrint("pay now $payNow");
+  Future<void> paymentChoice() async {
     emit(LoadingState(true));
     final response =
-    await _paymentRepository.paymentChoice(retributionId, payNow);
+    await _paymentRepository.paymentChoice(retributionId,  int.parse(PaymentChoice.payLater.value));
     emit(LoadingState(false));
     // emit(paymentChoiceSuccessState(payNow: payNow));
 
     if (response.success) {
-      emit(PaymentChoiceSuccessState(payNow: payNow));
+      SpUtil.putString(PAYMENT_STEP, PaymentStep.paymentChoice.name);
     } else {
       emit(ErrorState(error: response.message));
     }
   }
 
-  Future<void> paymentEntry(int retributionId, int totalHours, int viaJukir) async {
+  Future<void> paymentEntry(int totalHours, int viaJukir) async {
     emit(LoadingState(true));
     final response =
     await _paymentRepository.paymentEntry(retributionId, totalHours, viaJukir);
@@ -59,13 +67,13 @@ class PaymentBloc extends Cubit<PaymentState> {
     }
   }
 
-  Future<void> leaveParking(int id, int viaJukir) async {
+  Future<void> leaveParking(int viaJukir, PaymentMethode paymentMethode) async {
     emit(LoadingState(true));
-    final response = await _parkingRepository.leaveParking(id, viaJukir);
+    final response = await _parkingRepository.leaveParking(retributionId, viaJukir);
     emit(LoadingState(false));
     if (response.success) {
       SpUtil.putString(INVOICE_ACTIVE, response.data!.pembayaran.noInvoice);
-      emit(LeaveParkingSuccessState(viaJukir: viaJukir == VIA_JUKIR_CODE, paymentInfo: response.data!.pembayaran));
+      emit(LeaveParkingSuccessState(viaJukir: viaJukir == VIA_JUKIR_CODE, paymentInfo: response.data!.pembayaran, paymentMethode: paymentMethode));
     } else {
       emit(ErrorState(error: response.message));
     }
@@ -99,7 +107,8 @@ class PaymentCheckoutSuccessState extends PaymentState {
 class LeaveParkingSuccessState extends PaymentState {
   final bool viaJukir;
   final PaymentEntry paymentInfo;
-  const LeaveParkingSuccessState({required this.viaJukir, required this.paymentInfo});
+  final PaymentMethode paymentMethode;
+  const LeaveParkingSuccessState({required this.viaJukir, required this.paymentInfo, required this.paymentMethode});
 }
 
 

@@ -43,62 +43,67 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
             },
             child: BlocBuilder<ParkingBloc, ParkingState>(
                 builder: (context, state) {
-                  return Scaffold(
-                      backgroundColor: AppColors.colorPrimary,
-                      body: Column(
-                        mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.all(40),
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(10)
-                            ),
-                            child: Column(
-                              children: [
-                                const Text("Pembayaran Berhasil", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.text)),
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 20, bottom: 30),
-                                  child: Text(retribution?.pembayaran?.noInvoice ?? "", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24, color: AppColors.colorPrimary)),
-                                ),
-                                Row(
+                  return PopScope(
+                    onPopInvoked:  (didPop) async {
+                      Navigator.of(context).pushNamedAndRemoveUntil("/", (route) => false);
+                    },
+                    child: Scaffold(
+                        backgroundColor: AppColors.colorPrimary,
+                        body: Column(
+                          mainAxisSize: MainAxisSize.max,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              margin: const EdgeInsets.all(40),
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10)
+                              ),
+                              child: Column(
+                                children: [
+                                  const Text("Pembayaran Berhasil", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.text)),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 20, bottom: 30),
+                                    child: Text(retribution?.pembayaran?.noInvoice ?? "", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24, color: AppColors.colorPrimary)),
+                                  ),
+                                  Row(
 
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(child:  Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text("Lokasi : ", style: TextStyle(color: AppColors.text)),
-                                        Text(retribution?.lokasiParkir?.namaLokasi ?? "", style: TextStyle(color: AppColors.text, fontWeight: FontWeight.bold)),
-                                        Text(retribution?.lokasiParkir?.alamatLokasi ?? "", style: TextStyle(color: AppColors.textPassive)),
-                                      ],
-                                    )),
-                                    SizedBox(width: 20,),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                      children: [
-                                        Text("Tarif :", style: TextStyle(color: AppColors.text)),
-                                        Text("Rp ${retribution?.pembayaran?.grossAmount ?? "0"}", style: TextStyle(color: AppColors.text, fontWeight: FontWeight.bold)),
-                                      ],
-                                    )
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(child:  Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text("Lokasi : ", style: TextStyle(color: AppColors.text)),
+                                          Text(retribution?.lokasiParkir?.namaLokasi ?? "", style: TextStyle(color: AppColors.text, fontWeight: FontWeight.bold)),
+                                          Text(retribution?.lokasiParkir?.alamatLokasi ?? "", style: TextStyle(color: AppColors.textPassive)),
+                                        ],
+                                      )),
+                                      SizedBox(width: 20,),
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          Text("Tarif :", style: TextStyle(color: AppColors.text)),
+                                          Text("Rp ${retribution?.pembayaran?.grossAmount ?? "0"}", style: TextStyle(color: AppColors.text, fontWeight: FontWeight.bold)),
+                                        ],
+                                      )
 
-                                  ],
-                                ),
-                                const SizedBox(height: 20,),
-                                ButtonDefault(title: "Selesai", color: AppColors.green,  onTap: (){
-                                  SpUtil.remove(RETRIBUTION_ID_ACTIVE);
-                                  Navigator.pushNamedAndRemoveUntil(context, "/", (route) => false);
-                                }),
-                              ],
-                            ),
-                          )
-                        ],
-                      )
+                                    ],
+                                  ),
+                                  const SizedBox(height: 20,),
+                                  ButtonDefault(title: "Selesai", color: AppColors.green,  onTap: (){
+                                    SpUtil.remove(RETRIBUTION_ID_ACTIVE);
+                                    Navigator.pushNamedAndRemoveUntil(context, "/", (route) => false);
+                                  }),
+                                ],
+                              ),
+                            )
+                          ],
+                        )
+                    ),
                   );
                 }
             )

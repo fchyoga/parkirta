@@ -7,6 +7,7 @@ import 'package:parkirta/data/model/retribusi.dart';
 import 'package:parkirta/data/repository/parking_repository.dart';
 import 'package:parkirta/data/repository/payment_repository.dart';
 import 'package:parkirta/data/repository/user_repository.dart';
+import 'package:parkirta/utils/contsant/transaction_const.dart';
 import 'package:parkirta/utils/contsant/user_const.dart';
 import 'package:sp_util/sp_util.dart';
 
@@ -25,6 +26,7 @@ class ParkingBloc extends Cubit<ParkingState> {
       var retributions = await Hive.openBox<Retribusi>('retribusiBox');
       retributions.put(0, response.data!.retribusi);
 
+      SpUtil.putString(PARKING_STATUS, response.data!.retribusi.statusParkir);
       emit(CheckDetailParkingSuccessState(data: response.data!));
     } else {
       emit(ErrorState(error: response.message));

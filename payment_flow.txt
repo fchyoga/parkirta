@@ -16,4 +16,4 @@ Alur Pembayaran :
 	- Upload Foto Kendaraan
 	- Payment Choice (is_pay_now = 0)
 	- Parking Leave
-	- Payment Checkout
+	- Payment Checkout / Jukir

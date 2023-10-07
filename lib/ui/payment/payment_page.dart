@@ -6,6 +6,7 @@ import 'package:flutter_screen_lock/flutter_screen_lock.dart';
 import 'package:parkirta/bloc/payment_bloc.dart';
 import 'package:parkirta/utils/contsant/app_colors.dart';
 import 'package:parkirta/utils/contsant/payment_choice.dart';
+import 'package:parkirta/utils/contsant/payment_methode.dart';
 import 'package:parkirta/utils/contsant/payment_step.dart';
 import 'package:parkirta/utils/contsant/transaction_const.dart';
 import 'package:parkirta/widget/button/button_default.dart';
@@ -32,7 +33,7 @@ class _PaymentPageState extends State<PaymentPage> {
   Retribusi? retribution;
   Duration? duration;
   String? paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
-  String? paymentChoice = SpUtil.getString(PAYMENT_CHOICE, defValue: null);
+  String? parkingStatus = SpUtil.getString(PARKING_STATUS, defValue: null);
 
 
   @override
@@ -43,21 +44,21 @@ class _PaymentPageState extends State<PaymentPage> {
     duration = args["durasi"];
     debugPrint("cek time $time");
     debugPrint("cek hour ${duration!.inHours} : ${duration!.inMinutes.remainder(60)}");
-    paymentStep = args[PAYMENT_STEP];
     return BlocProvider(
-        create: (context) => PaymentBloc(),
+        create: (context) => PaymentBloc(retribution!.id),
         child: BlocListener<PaymentBloc, PaymentState>(
             listener: (context, state) async{
-              if (state is PaymentChoiceSuccessState) {
-                SpUtil.putString(PAYMENT_STEP, PaymentStep.paymentChoice.name);
-                paymentStep =  PaymentStep.paymentChoice.name;
-              } else if (state is LoadingState) {
+              if (state is LoadingState) {
                 state.show ? _loadingDialog.show(context) : _loadingDialog.hide();
-              // } else if (state is CheckDetailParkingSuccessState) {
-              } else if (state is PaymentEntrySuccessState) {
-                SpUtil.putString(PAYMENT_STEP, PaymentStep.paymentEntry.name);
-                paymentStep =  PaymentStep.paymentEntry.name;
-                if(!state.viaJukir) {
+                // } else if (state is CheckDetailParkingSuccessState) {
+              } else if (state is PaymentChoiceSuccessState) {
+                // SpUtil.putString(PAYMENT_STEP, PaymentStep.parkingStatus.name);
+                // paymentStep =  PaymentStep.parkingStatus.name;
+              } else if (state is LeaveParkingSuccessState) {
+                SpUtil.putString(PAYMENT_STEP, PaymentStep.parkingLeave.name);
+                SpUtil.putString(INVOICE_ACTIVE, state.paymentInfo.noInvoice);
+                paymentStep =  PaymentStep.parkingLeave.name;
+                if(state.paymentMethode == PaymentMethode.eWallet) {
                   openKeyPad(state.paymentInfo.noInvoice);
                 }else{
                   showBottomSheetWaiting(context);
@@ -65,14 +66,6 @@ class _PaymentPageState extends State<PaymentPage> {
               } else if (state is PaymentCheckoutSuccessState) {
                 SpUtil.putString(PAYMENT_STEP, PaymentStep.paymentCheckout.name);
                 paymentStep =  PaymentStep.paymentCheckout.name;
-              } else if (state is LeaveParkingSuccessState) {
-                SpUtil.putString(PAYMENT_STEP, PaymentStep.parkingLeave.name);
-                paymentStep =  PaymentStep.parkingLeave.name;
-                if(!state.viaJukir) {
-                  openKeyPad(state.paymentInfo.noInvoice);
-                }else{
-                  showBottomSheetWaiting(context);
-                }
               } else if (state is ErrorState) {
                 showTopSnackBar(
                   context,
@@ -174,23 +167,13 @@ class _PaymentPageState extends State<PaymentPage> {
 
          const SizedBox(height: 80,),Text("Metode pembayaran", style: const TextStyle(fontWeight: FontWeight.bold)),
          const SizedBox(height: 10,),
-         ButtonDefault(title: "Bayar Sekarang", color: AppColors.green, onTap: () {
+         ButtonDefault(title: "E-Wallet", color: AppColors.green, onTap: () {
            var inv = SpUtil.getString(INVOICE_ACTIVE, defValue: null);
            debugPrint("testtt $inv ${inv==null} ${inv?.isEmpty}");
-           if(paymentStep == PAY_NOW){
-             if(inv==null){
-               var hour = duration==null ? 1: duration!.inMinutes.remainder(60) > 5 ? duration!.inHours + 1: duration!.inHours;
-               context.read<PaymentBloc>().paymentEntry(retribution!.id, hour , NOT_VIA_JUKIR_CODE);
-             }else{
-               openKeyPad(inv);
-             }
+           if(inv==null) {
+             context.read<PaymentBloc>().leaveParking(NOT_VIA_JUKIR_CODE, PaymentMethode.eWallet);
            }else{
-             if(inv==null) {
-               context.read<PaymentBloc>().leaveParking(
-                   retribution!.id, NOT_VIA_JUKIR_CODE);
-             }else{
-               openKeyPad(inv);
-             }
+             openKeyPad(inv);
            }
     }
            //   screenLock(
@@ -209,14 +192,13 @@ class _PaymentPageState extends State<PaymentPage> {
          // ),
          ),
          const SizedBox(height: 10,),
-         ButtonDefault(title: "Via Jukir", color: AppColors.greenLight, textColor: AppColors.green, onTap: (){
-           if(paymentStep == PAY_NOW){
-
-             var hour = duration==null ? 1: duration!.inMinutes.remainder(60) > 5 ? duration!.inHours + 1: duration!.inHours;
-             context.read<PaymentBloc>().paymentEntry(retribution!.id, hour , VIA_JUKIR_CODE);
-           }else{
-             context.read<PaymentBloc>().leaveParking(retribution!.id, VIA_JUKIR_CODE);
-           }
+         ButtonDefault(title: "Cash", color: AppColors.greenLight, textColor: AppColors.green, onTap: (){
+           context.read<PaymentBloc>().leaveParking(VIA_JUKIR_CODE, PaymentMethode.cash);
+           // showBottomSheetWaiting(context);
+         }),
+         const SizedBox(height: 10,),
+         ButtonDefault(title: "Card", color: AppColors.greenLight, textColor: AppColors.green, onTap: (){
+           context.read<PaymentBloc>().leaveParking(VIA_JUKIR_CODE, PaymentMethode.card);
            // showBottomSheetWaiting(context);
          }),
 
@@ -288,7 +270,7 @@ class _PaymentPageState extends State<PaymentPage> {
   String? getTotalPrice(){
     if(duration!=null && retribution?.biayaParkir?.biayaParkir !=null){
 
-      var hour = duration==null ? 1: duration!.inMinutes.remainder(60) > 5 ? duration!.inHours + 1: duration!.inMinutes;
+      var hour =  duration!.inMinutes.remainder(60) > 5 ? duration!.inHours + 1: duration!.inHours;
       debugPrint("cek hour ${duration!.inHours} : ${duration!.inMinutes.remainder(60)}");
       debugPrint("cek hour $hour * ${retribution!.biayaParkir!.biayaParkir}");
       return "${hour*retribution!.biayaParkir!.biayaParkir}";

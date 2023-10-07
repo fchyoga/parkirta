@@ -49,7 +49,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   bool _isLoading = true;
   Polyline _polyline = Polyline(polylineId: PolylineId('route'), points: []);
   loc.Location _location = loc.Location();
-  String? paymentChoice = SpUtil.getString(PAYMENT_CHOICE, defValue: null);
+  String? parkingStatus = SpUtil.getString(PARKING_STATUS, defValue: null);
   Retribusi? retribution;
   DateTime? parkingTime;
   CardTimer? cardTimer;
@@ -72,21 +72,21 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void initState(){
     Timer(const Duration(seconds: 1), () async{
       getLocalData();
-      SpUtil.putInt(RETRIBUTION_ID_ACTIVE, 105);
-      paymentChoice = PaymentChoice.payLater.name;
+      // SpUtil.putInt(RETRIBUTION_ID_ACTIVE, 105);
       // SpUtil.remove(RETRIBUTION_ID_ACTIVE);
       // SpUtil.remove(PAYMENT_STEP);
       var retributionActive = SpUtil.getInt(RETRIBUTION_ID_ACTIVE, defValue: null);
+      debugPrint("parking status ${parkingStatus}");
       // if(retributionActive!=null){
-      if(retributionActive!=null && paymentChoice!=null){
-        var paymentChoice = await Navigator.pushNamed(
+      if(retributionActive!=null && parkingStatus == ParkingStatus.menungguJukir.name ){
+        var parkingStatus = await Navigator.pushNamed(
             _context,
             "/arrive",
           arguments: retributionActive
         );
-        if(paymentChoice is String){
+        if(parkingStatus is String){
           setState(() {
-            paymentChoice = paymentChoice;
+            parkingStatus = parkingStatus;
           });
           getLocalData();
         }
@@ -105,7 +105,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     print("Lifecycle State --> ${state} ");
     if(state == AppLifecycleState.resumed){
       setState(() {
-        paymentChoice = SpUtil.getString(PAYMENT_CHOICE, defValue: null);
+        parkingStatus = SpUtil.getString(PARKING_STATUS, defValue: null);
       });
       getLocalData();
     }
@@ -132,14 +132,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 });
               } else if (state is SuccessSubmitArrivalState) {
                 SpUtil.putInt(RETRIBUTION_ID_ACTIVE, state.data.idRetribusiParkir);
-                var paymentChoice = await Navigator.pushNamed(
+                var parkingStatus = await Navigator.pushNamed(
                     context,
                     "/arrive",
                     arguments: state.data.idRetribusiParkir
                 );
-                if(paymentChoice is String){
+                if(parkingStatus is String){
                   setState(() {
-                    paymentChoice = paymentChoice;
+                    parkingStatus = parkingStatus;
                   });
                   getLocalData();
                 }
@@ -346,6 +346,15 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             infoWindow: const InfoWindow(title: 'My Location'),
           ),
         };
+
+        parkingStatus = SpUtil.getString(PARKING_STATUS, defValue: null);
+        if(parkingTime!= null && parkingStatus!= null && parkingStatus != ParkingStatus.menungguJukir.name && parkingStatus != ParkingStatus.telahKeluar.name) {
+
+          debugPrint("show cardTimer $parkingStatus ");
+          cardTimer = buildCardTimer(_context, parkingTime, retribution!);
+        } else {
+          cardTimer = null;
+        }
       });
     });
   }
@@ -828,8 +837,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               Navigator.pushNamed(_context, "/payment", arguments: {
                 "retribusi": retribution,
                 "jam": parkingTime,
-                "durasi": DateTime.now().difference(parkingTime!),
-                PAYMENT_CHOICE: paymentChoice
+                "durasi": DateTime.now().difference(parkingTime)
               });
             },
           )
@@ -852,8 +860,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       SpUtil.remove(RETRIBUTION_ID_ACTIVE);
       SpUtil.remove(PAYMENT_STEP);
       SpUtil.remove(INVOICE_ACTIVE);
+      SpUtil.remove(PARKING_STATUS);
       retribution = null;
       parkingTime = null;
+      parkingStatus = null;
       debugPrint("remove LocalData $parkingTime ${retribution}");
     }else if(retributions.isNotEmpty){
       retribution = retributions.getAt(0);
@@ -862,8 +872,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
     }
     setState(() {
-      paymentChoice = SpUtil.getString(PAYMENT_STEP, defValue: null);
-      if(paymentChoice == PAY_LATER && parkingTime!= null) {
+      parkingStatus = SpUtil.getString(PARKING_STATUS, defValue: null);
+      if(parkingTime!= null && parkingStatus!= null && parkingStatus != ParkingStatus.menungguJukir.name && parkingStatus != ParkingStatus.telahKeluar.name) {
+        debugPrint("show cardTimer $parkingStatus ");
         cardTimer = buildCardTimer(_context, parkingTime, retribution!);
       } else {
         cardTimer = null;
