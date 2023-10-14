@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screen_lock/flutter_screen_lock.dart';
 import 'package:parkirta/bloc/payment_bloc.dart';
 import 'package:parkirta/utils/contsant/app_colors.dart';
+import 'package:parkirta/utils/contsant/parking_status.dart';
 import 'package:parkirta/utils/contsant/payment_choice.dart';
 import 'package:parkirta/utils/contsant/payment_methode.dart';
 import 'package:parkirta/utils/contsant/payment_step.dart';
@@ -61,11 +62,15 @@ class _PaymentPageState extends State<PaymentPage> {
                 if(state.paymentMethode == PaymentMethode.eWallet) {
                   openKeyPad(state.paymentInfo.noInvoice);
                 }else{
-                  showBottomSheetWaiting(context);
+                  showBottomSheetWaiting(context, retribution!.id, state);
                 }
               } else if (state is PaymentCheckoutSuccessState) {
                 SpUtil.putString(PAYMENT_STEP, PaymentStep.paymentCheckout.name);
                 paymentStep =  PaymentStep.paymentCheckout.name;
+              } else if (state is CheckDetailParkingSuccessState) {
+                if(state.data.retribusi.statusParkir == ParkingStatus.telahKeluar.name){
+                  Navigator.pushNamed(context,'/payment_success', arguments: state.data.retribusi.id);
+                }
               } else if (state is ErrorState) {
                 showTopSnackBar(
                   context,
@@ -111,7 +116,7 @@ class _PaymentPageState extends State<PaymentPage> {
                       body:   SingleChildScrollView(
                         child: Column(
                           children: [
-                            retribution!=null ? buildParkingConfirmation(context):
+                            retribution!=null ? buildParkingConfirmation(context, state):
                             const Text("Payment not found"),
                           ],
                         ),
@@ -123,7 +128,7 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
-  Widget buildParkingConfirmation(BuildContext context){
+  Widget buildParkingConfirmation(BuildContext context, PaymentState state){
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 30),
       child: Column(
@@ -193,8 +198,9 @@ class _PaymentPageState extends State<PaymentPage> {
          ),
          const SizedBox(height: 10,),
          ButtonDefault(title: "Cash", color: AppColors.greenLight, textColor: AppColors.green, onTap: (){
-           context.read<PaymentBloc>().leaveParking(VIA_JUKIR_CODE, PaymentMethode.cash);
-           // showBottomSheetWaiting(context);
+           if(paymentStep ==  PaymentStep.parkingLeave.name){
+             showBottomSheetWaiting(context, retribution!.id, state);
+           } else context.read<PaymentBloc>().leaveParking(VIA_JUKIR_CODE, PaymentMethode.cash);
          }),
          const SizedBox(height: 10,),
          ButtonDefault(title: "Card", color: AppColors.greenLight, textColor: AppColors.green, onTap: (){
@@ -208,16 +214,16 @@ class _PaymentPageState extends State<PaymentPage> {
   }
 
 
-  void showBottomSheetWaiting(BuildContext _context) {
+  void showBottomSheetWaiting(BuildContext context, int id, PaymentState state) {
 
     // Timer(Duration(seconds: 5), (){
     //   Navigator.of(context).pushNamed("/payment_success");
     // });
     showModalBottomSheet(
-        context: _context,
+        context: context,
         isScrollControlled: true,
         backgroundColor: Colors.white,
-        builder: (context) {
+        builder: (ctx) {
 
           return SingleChildScrollView(
             child: AnimatedPadding(
@@ -229,11 +235,23 @@ class _PaymentPageState extends State<PaymentPage> {
                     minHeight: 200
                 ),
                 alignment: Alignment.center,
-                child: const Column(
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(
+                    Row(
+                      children: [
+                        Spacer(),
+                        state is LoadingState ? SizedBox.shrink():
+                        IconButton(
+                            onPressed: () {
+                              context.read<PaymentBloc>().checkDetailParking(id.toString());
+                            },
+                            icon: Icon(Icons.refresh_rounded))
+                      ],
+                    ),
+                    const SizedBox(height: 50,),
+                    const Text(
                       "Menunggu Konfirmasi \nJuru Parkir",
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -242,14 +260,16 @@ class _PaymentPageState extends State<PaymentPage> {
                         fontSize: 16,
                       ),
                     ),
-                    SizedBox(height: 10,),
-                    Text(
+                    const SizedBox(height: 10,),
+                    const Text(
                       "Tunggu sebentar..",
                       style: TextStyle(
                         color: AppColors.textPassive,
                         fontSize: 16,
                       ),
-                    )
+                    ),
+
+                    const SizedBox(height: 50,),
                   ],
                 ),
               ),

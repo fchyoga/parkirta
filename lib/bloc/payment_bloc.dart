@@ -79,6 +79,20 @@ class PaymentBloc extends Cubit<PaymentState> {
     }
   }
 
+
+  Future<void> checkDetailParking(String id) async {
+    emit(LoadingState(true));
+    final response =
+    await _parkingRepository.checkDetailParking(id);
+    emit(LoadingState(false));
+    if (response.success) {
+      SpUtil.putString(PARKING_STATUS, response.data!.retribusi.statusParkir);
+      emit(CheckDetailParkingSuccessState(data: response.data!));
+    } else {
+      emit(ErrorState(error: response.message));
+    }
+  }
+
 }
 
 abstract class PaymentState {
@@ -111,8 +125,10 @@ class LeaveParkingSuccessState extends PaymentState {
   const LeaveParkingSuccessState({required this.viaJukir, required this.paymentInfo, required this.paymentMethode});
 }
 
-
-
+class CheckDetailParkingSuccessState extends PaymentState {
+  final ParkingCheckDetail data;
+  const CheckDetailParkingSuccessState({required this.data});
+}
 
 class ErrorState extends PaymentState {
   final String error;

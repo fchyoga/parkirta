@@ -70,14 +70,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   void initState(){
-    Timer(const Duration(seconds: 1), () async{
+    Timer(const Duration(milliseconds: 500), () async{
       getLocalData();
       // SpUtil.putInt(RETRIBUTION_ID_ACTIVE, 105);
       // SpUtil.remove(RETRIBUTION_ID_ACTIVE);
       // SpUtil.remove(PAYMENT_STEP);
       var retributionActive = SpUtil.getInt(RETRIBUTION_ID_ACTIVE, defValue: null);
       debugPrint("parking status ${parkingStatus}");
-      // if(retributionActive!=null){
+      if(retributionActive!=null) _context.read<HomeBloc>().checkDetailParking(retributionActive.toString());
       if(retributionActive!=null && parkingStatus == ParkingStatus.menungguJukir.name ){
         var parkingStatus = await Navigator.pushNamed(
             _context,

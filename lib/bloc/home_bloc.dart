@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
+import 'package:parkirta/data/message/response/parking/parking_check_detail_response.dart';
 import 'package:parkirta/data/message/response/parking/parking_location_response.dart';
 import 'package:parkirta/data/message/response/parking/submit_arrive_response.dart';
 import 'package:parkirta/data/repository/parking_repository.dart';
-import 'package:parkirta/data/repository/user_repository.dart';
-import 'package:parkirta/utils/contsant/user_const.dart';
+import 'package:parkirta/utils/contsant/transaction_const.dart';
 import 'package:sp_util/sp_util.dart';
 
 class HomeBloc extends Cubit<HomeState> {
@@ -39,6 +39,20 @@ class HomeBloc extends Cubit<HomeState> {
       emit(ErrorState(error: response.message));
     }
   }
+
+
+  Future<void> checkDetailParking(String id) async {
+    emit(LoadingState(true));
+    final response =
+    await _parkingRepository.checkDetailParking(id);
+    emit(LoadingState(false));
+    if (response.success) {
+      SpUtil.putString(PARKING_STATUS, response.data!.retribusi.statusParkir);
+      emit(CheckDetailParkingSuccessState(data: response.data!));
+    } else {
+      emit(ErrorState(error: response.message));
+    }
+  }
 }
 
 abstract class HomeState {
@@ -52,9 +66,15 @@ class SuccessGetParkingLocationState extends HomeState {
   final List<ParkingLocation> data;
   const SuccessGetParkingLocationState({required this.data});
 }
+
 class SuccessSubmitArrivalState extends HomeState {
   final SubmitArrival data;
   const SuccessSubmitArrivalState({required this.data});
+}
+
+class CheckDetailParkingSuccessState extends HomeState {
+  final ParkingCheckDetail data;
+  const CheckDetailParkingSuccessState({required this.data});
 }
 
 class ErrorState extends HomeState {

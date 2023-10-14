@@ -27,6 +27,7 @@ class ParkingBloc extends Cubit<ParkingState> {
       retributions.put(0, response.data!.retribusi);
 
       SpUtil.putString(PARKING_STATUS, response.data!.retribusi.statusParkir);
+      SpUtil.remove(PAYMENT_STEP);
       emit(CheckDetailParkingSuccessState(data: response.data!));
     } else {
       emit(ErrorState(error: response.message));
