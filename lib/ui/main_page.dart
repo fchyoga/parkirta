@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:parkirta/bloc/auth_bloc.dart';
 import 'package:parkirta/color.dart';
@@ -32,6 +35,7 @@ class _MainPageState extends State<MainPage> {
 
   @override
   void initState() {
+    _requestPermissions();
     super.initState();
     fetchUserData();
   }
@@ -169,5 +173,34 @@ class _MainPageState extends State<MainPage> {
       ): null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
+  }
+  Future<void> _requestPermissions() async {
+    if (Platform.isIOS) {
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+          MacOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    } else if (Platform.isAndroid) {
+      final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
+      flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+
+      final bool? granted = await androidImplementation?.requestPermission();
+      // setState(() {
+      //   _notificationsEnabled = granted ?? false;
+      // });
+    }
   }
 }

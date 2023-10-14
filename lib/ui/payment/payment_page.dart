@@ -243,14 +243,17 @@ class _PaymentPageState extends State<PaymentPage> {
                       children: [
                         Spacer(),
                         state is LoadingState ? SizedBox.shrink():
-                        IconButton(
-                            onPressed: () {
-                              context.read<PaymentBloc>().checkDetailParking(id.toString());
-                            },
-                            icon: Icon(Icons.refresh_rounded))
+                        Padding(
+                          padding: EdgeInsets.all(10),
+                          child: IconButton(
+                              onPressed: () {
+                                context.read<PaymentBloc>().checkDetailParking(id.toString());
+                              },
+                              icon: const Icon(Icons.refresh_rounded, color: AppColors.text,)),
+                        )
                       ],
                     ),
-                    const SizedBox(height: 50,),
+                    const SizedBox(height: 40,),
                     const Text(
                       "Menunggu Konfirmasi \nJuru Parkir",
                       textAlign: TextAlign.center,
