@@ -30,8 +30,7 @@ class HomeBloc extends Cubit<HomeState> {
 
   Future<void> getParkingLocation() async {
     emit(LoadingState(true));
-    final response =
-        await _parkingRepository.parkingLocation();
+    final response = await _parkingRepository.parkingLocation();
     emit(LoadingState(false));
     if (response.success) {
       emit(SuccessGetParkingLocationState(data: response.data));
@@ -43,8 +42,7 @@ class HomeBloc extends Cubit<HomeState> {
 
   Future<void> checkDetailParking(String id) async {
     emit(LoadingState(true));
-    final response =
-    await _parkingRepository.checkDetailParking(id);
+    final response = await _parkingRepository.checkDetailParking(id);
     emit(LoadingState(false));
     if (response.success) {
       SpUtil.putString(PARKING_STATUS, response.data!.retribusi.statusParkir);
