@@ -17,7 +17,7 @@ class CardTimer extends StatefulWidget {
 
 class _CardTimerState extends State<CardTimer> {
 
-  String duration = "--:--";
+  String duration = "--:--:--";
 
   @override
   void initState() {
@@ -73,8 +73,9 @@ class _CardTimerState extends State<CardTimer> {
       var now = DateTime.now();
       var diff = now.difference(dateTime);
       setState(() {
+        var second = diff.inSeconds.remainder(60) == 0 ? "01" :diff.inSeconds.remainder(60).toString().padLeft(2, '0');
         var minutes = diff.inMinutes.remainder(60) == 0 ? "01" :diff.inMinutes.remainder(60).toString().padLeft(2, '0');
-        duration = "${diff.inHours.toString().padLeft(2, '0')}:$minutes";
+        duration = "${diff.inHours.toString().padLeft(2, '0')}:$minutes:$second";
       });
     });
   }
