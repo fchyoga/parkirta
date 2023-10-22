@@ -161,9 +161,9 @@ class _MainPageState extends State<MainPage> {
             ),
             child: InkWell(
               onTap: () {
-                Navigator.push(
+                Navigator.pushReplacementNamed(
                   context,
-                  MaterialPageRoute(builder: (context) => MainPage()),
+                 "/",
                 );
               },
               child: SvgPicture.asset("assets/images/ic_discovery.svg"),

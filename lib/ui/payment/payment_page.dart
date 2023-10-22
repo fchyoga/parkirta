@@ -43,6 +43,7 @@ class _PaymentPageState extends State<PaymentPage> {
     retribution = args["retribusi"];
     var time = args["jam"];
     duration = args["durasi"];
+    debugPrint("retribusi  ${retribution!.id}");
     debugPrint("cek time $time");
     debugPrint("cek hour ${duration!.inHours} : ${duration!.inMinutes.remainder(60)}");
     return BlocProvider(

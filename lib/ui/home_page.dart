@@ -43,7 +43,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   List<ParkingLocation> _parkingLocations = [];
   Set<Polyline> _polylines = {};
   Set<Marker> _myLocationMarker = {};
-  LatLng _myLocation = LatLng(0, 0);
+  LatLng? _myLocation;
   ParkingLocation? selectedLocation;
   PolylinePoints polylinePoints = PolylinePoints();
   bool _isLoading = true;
@@ -71,6 +71,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void initState(){
     Timer(const Duration(milliseconds: 500), () async{
+
       getLocalData();
       // SpUtil.putInt(RETRIBUTION_ID_ACTIVE, 105);
       // SpUtil.remove(RETRIBUTION_ID_ACTIVE);
@@ -193,111 +194,117 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                           ),
                         ],
                       ),
-                      body: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          SizedBox(
-                            height: MediaQuery.of(context).size.height,
-                            child: GoogleMap(
-                              onMapCreated: _onMapCreated,
-                              zoomControlsEnabled: false,
-                              myLocationButtonEnabled: true,
-                              mapToolbarEnabled: false,
-                              mapType: MapType.normal,
-                              initialCameraPosition: const CameraPosition(
-                                target: LatLng(-5.143648100120257, 119.48282708990482), // Ganti dengan posisi awal peta
-                                zoom: 20.0,
-                              ),
-                              markers: Set<Marker>.from(_parkingLocations.map((location) => Marker(
-                                markerId: MarkerId(location.id.toString()),
-                                position: LatLng(
-                                  double.parse(location.lat),
-                                  double.parse(location.long),
+                      body: SafeArea(
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            SizedBox(
+                              height: MediaQuery.of(context).size.height,
+                              child: GoogleMap(
+                                onMapCreated: _onMapCreated,
+                                zoomControlsEnabled: false,
+                                myLocationButtonEnabled: true,
+                                mapToolbarEnabled: false,
+                                mapType: MapType.normal,
+                                initialCameraPosition: const CameraPosition(
+                                  target: LatLng(-5.143648100120257, 119.48282708990482), // Ganti dengan posisi awal peta
+                                  zoom: 20.0,
                                 ),
-                                icon: defaultIcon,
-                                onTap: () {
-                                  _showParkingLocationPopup(context, location);
-                                },
-                              ))).union(_myLocationMarker),
-                              polylines: _polylines,
-                              polygons: Set<Polygon>.from(_parkingLocations.where((e) => e.areaLatlong!=null).toList().map((location) {
-                                List<String> areaLatLongStrings = location.areaLatlong!.split('},{');
-                                List<LatLng> polygonCoordinates = areaLatLongStrings.map<LatLng>((areaLatLongString) {
-                                  String latLngString = areaLatLongString.replaceAll('{', '').replaceAll('}', '');
-                                  List<String> latLngList = latLngString.split(',');
-
-                                  double lat = double.parse(latLngList[0].split(':')[1]);
-                                  double lng = double.parse(latLngList[1].split(':')[1]);
-
-                                  return LatLng(lat, lng);
-                                }).toList();
-
-                                return Polygon(
-                                  polygonId: PolygonId(location.id.toString()),
-                                  points: polygonCoordinates,
-                                  fillColor: Colors.blue.withOpacity(0.3),
-                                  strokeColor: Colors.blue,
-                                  strokeWidth: 2,
-                                );
-                              })),
-
-                            ),
-                          ),
-                          Positioned(
-                            top: 16.0,
-                            right: 16.0,
-                            child: FloatingActionButton(
-                              backgroundColor: Colors.white,
-                              onPressed: () {
-                                _cancelRoute();
-                              },
-                              child: const Icon(Icons.cancel_rounded),
-                            ),
-                          ),
-                          Positioned(
-                              bottom: 16.0,
-                              right: 16.0,
-                              child: InkWell(
-                                child: Container(
-                                  alignment: Alignment.center,
-                                  padding:  EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(10),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.01),
-                                        blurRadius: 5,
-                                        offset: const Offset(0, 12),),
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.05),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 7),),
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.09),
-                                        blurRadius: 3,
-                                        offset: const Offset(0, 3),),
-                                      BoxShadow(
-                                        color: Colors.grey.withOpacity(0.10),
-                                        blurRadius: 2,
-                                        offset: const Offset(0, 1),),
-                                    ],
-
+                                markers: Set<Marker>.from(_parkingLocations.map((location) => Marker(
+                                  markerId: MarkerId(location.id.toString()),
+                                  position: LatLng(
+                                    double.parse(location.lat),
+                                    double.parse(location.long),
                                   ),
-                                  child: const Icon(Icons.my_location_outlined, color: AppColors.textPassive,),
-                                ),
-                                onTap: () {
-                                  _mapController?.animateCamera(CameraUpdate.newLatLng(_myLocation));
-                                },
-                              )
-                          ),
-                          Positioned(
-                              top: 136,
-                              right: 16,
-                              child: cardTimer ?? Container()
-                          )
+                                  icon: defaultIcon,
+                                  onTap: () {
+                                    _showParkingLocationPopup(context, location);
+                                  },
+                                ))).union(_myLocationMarker),
+                                polylines: _polylines,
+                                polygons: Set<Polygon>.from(_parkingLocations.where((e) => e.areaLatlong!=null).toList().map((location) {
+                                  List<String> areaLatLongStrings = location.areaLatlong!.split('},{');
+                                  List<LatLng> polygonCoordinates = areaLatLongStrings.map<LatLng>((areaLatLongString) {
+                                    String latLngString = areaLatLongString.replaceAll('{', '').replaceAll('}', '');
+                                    List<String> latLngList = latLngString.split(',');
 
-                        ],
+                                    double lat = double.parse(latLngList[0].split(':')[1]);
+                                    double lng = double.parse(latLngList[1].split(':')[1]);
+
+                                    return LatLng(lat, lng);
+                                  }).toList();
+
+                                  return Polygon(
+                                    polygonId: PolygonId(location.id.toString()),
+                                    points: polygonCoordinates,
+                                    fillColor: Colors.blue.withOpacity(0.3),
+                                    strokeColor: Colors.blue,
+                                    strokeWidth: 2,
+                                  );
+                                })),
+
+                              ),
+                            ),
+                            // Positioned(
+                            //   top: 16.0,
+                            //   right: 16.0,
+                            //   child: FloatingActionButton(
+                            //     backgroundColor: Colors.white,
+                            //     onPressed: () {
+                            //       _cancelRoute();
+                            //     },
+                            //     child: const Icon(Icons.cancel_rounded),
+                            //   ),
+                            // ),
+                            Positioned(
+                                bottom: 16.0,
+                                right: 16.0,
+                                child: InkWell(
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    padding:  EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.grey.withOpacity(0.01),
+                                          blurRadius: 5,
+                                          offset: const Offset(0, 12),),
+                                        BoxShadow(
+                                          color: Colors.grey.withOpacity(0.05),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 7),),
+                                        BoxShadow(
+                                          color: Colors.grey.withOpacity(0.09),
+                                          blurRadius: 3,
+                                          offset: const Offset(0, 3),),
+                                        BoxShadow(
+                                          color: Colors.grey.withOpacity(0.10),
+                                          blurRadius: 2,
+                                          offset: const Offset(0, 1),),
+                                      ],
+
+                                    ),
+                                    child: const Icon(Icons.my_location_outlined, color: AppColors.textPassive,),
+                                  ),
+                                  onTap: () {
+                                    if(_myLocation!=null) {
+                                      _mapController?.animateCamera(CameraUpdate.newLatLngZoom(_myLocation!, 20));
+                                    } else {
+                                      _getUserLocation();
+                                    }
+                                  },
+                                )
+                            ),
+                            Positioned(
+                                top: 16,
+                                right: 16,
+                                child: cardTimer ?? Container()
+                            )
+
+                          ],
+                        ),
                       )
                   );
                 })
@@ -333,7 +340,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   void _startLocationUpdates() {
     _location.onLocationChanged.listen((loc.LocationData currentLocation) {
-      setState(() {
+      // setState(() {
         _myLocation = LatLng(
           currentLocation.latitude!,
           currentLocation.longitude!,
@@ -341,21 +348,22 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         _myLocationMarker = <Marker>{
           Marker(
             markerId: const MarkerId('my_location'),
-            position: _myLocation,
+            position: _myLocation!,
             icon: myLocationIcon,
             infoWindow: const InfoWindow(title: 'My Location'),
           ),
         };
+        getLocalData();
 
-        parkingStatus = SpUtil.getString(PARKING_STATUS, defValue: null);
-        if(parkingTime!= null && parkingStatus!= null && parkingStatus != ParkingStatus.menungguJukir.name && parkingStatus != ParkingStatus.telahKeluar.name) {
-
-          debugPrint("show cardTimer $parkingStatus ");
-          cardTimer = buildCardTimer(_context, parkingTime, retribution!);
-        } else {
-          cardTimer = null;
-        }
-      });
+      //   parkingStatus = SpUtil.getString(PARKING_STATUS, defValue: null);
+      //   if(parkingTime!= null && parkingStatus!= null && parkingStatus != ParkingStatus.menungguJukir.name && parkingStatus != ParkingStatus.telahKeluar.name) {
+      //
+      //     debugPrint("show cardTimer $parkingStatus ");
+      //     cardTimer = buildCardTimer(_context, parkingTime, retribution!);
+      //   } else {
+      //     cardTimer = null;
+      //   }
+      // });
     });
   }
 
@@ -429,21 +437,21 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
     locationData = await location.getLocation();
     _startLocationUpdates();
+
+    if(locationData==null) return;
     setState(() {
-      _myLocation = locationData != null
-        ? LatLng(locationData.latitude!, locationData.longitude!)
-        : LatLng(0, 0);
+      _myLocation = LatLng(locationData!.latitude!, locationData!.longitude!);
       _myLocationMarker = <Marker>{
         Marker(
           markerId: MarkerId('my_location'),
-          position: _myLocation,
+          position: _myLocation!,
           icon: myLocationIcon,
           infoWindow: InfoWindow(title: 'My Location'),
         ),
       };
     });
 
-    _mapController?.animateCamera(CameraUpdate.newLatLng(_myLocation));
+    _mapController?.animateCamera(CameraUpdate.newLatLngZoom(_myLocation!, 20));
   }
 
   // Future<void> _fetchParkingLocations() async {
@@ -465,12 +473,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     debugPrint("map created");
 
     SchedulerBinding.instance.addPostFrameCallback((_) {
-      if (_mapController != '') {
+      if (_mapController != null && _myLocation!=null) {
         setState(() {
           _myLocationMarker = <Marker>{
             Marker(
               markerId: MarkerId('my_location'),
-              position: _myLocation,
+              position: _myLocation!,
               icon: myLocationIcon,
               infoWindow: InfoWindow(title: 'My Location'),
             ),
@@ -632,12 +640,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         return LatLng(lat, lng);
       }).toList();
 
-      bool isInLocationAreaResult = isInLocationArea(
-        LatLng(_myLocation.latitude, _myLocation.longitude),
+      bool isInLocationAreaResult = _myLocation!=null ? isInLocationArea(
+        _myLocation!,
         polygonCoordinates,
-      );
+      ): false;
 
-      if (isInLocationAreaResult) {
+
+      if (isInLocationAreaResult && _myLocation!=null) {
         // Tampilkan dialog lokasi parkir
         showDialog(
           context: context,
@@ -668,8 +677,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         _context.read<HomeBloc>().submitArrival(
                           location.id.toString(),
                           userId.toString(),
-                          _myLocation.latitude.toString(),
-                          _myLocation.longitude.toString(),
+                          _myLocation!.latitude.toString(),
+                          _myLocation!.longitude.toString(),
                         );
 
                         Navigator.pop(context);
@@ -711,7 +720,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     // Mendapatkan rute antara posisi pengguna dan tujuan (lokasi parkir)
     PolylineResult polylineResult = await polylinePoints.getRouteBetweenCoordinates(
       'AIzaSyA92HfpnxtX1kHsozA0ACaxpq5IQfq9GqI', // Ganti dengan kunci API Google Maps Anda
-      PointLatLng(_myLocation.latitude, _myLocation.longitude),
+      PointLatLng(_myLocation?.latitude ?? 0, _myLocation?.longitude ?? 0),
       PointLatLng(destination.latitude, destination.longitude),
     );
 
@@ -769,19 +778,23 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     });
   }
 
+  Future<void> clearLocalData() async{
+    SpUtil.remove(RETRIBUTION_ID_ACTIVE);
+    SpUtil.remove(PAYMENT_STEP);
+    SpUtil.remove(INVOICE_ACTIVE);
+    SpUtil.remove(PARKING_STATUS);
+    retribution = null;
+    parkingTime = null;
+    parkingStatus = null;
+    debugPrint("remove LocalData $parkingTime ${retribution}");
+  }
   Future<void> getLocalData() async{
     var retributions = await Hive.openBox<Retribusi>('retribusiBox');
-    debugPrint("getLocalData $parkingTime ${retributions.length}");
+    debugPrint("getLocalData ${retributions.length}");
     if(retributions.isNotEmpty && retributions.getAt(0)?.statusParkir == ParkingStatus.telahKeluar.name) {
+      retributions.deleteAt(0);
       retributions.clear();
-      SpUtil.remove(RETRIBUTION_ID_ACTIVE);
-      SpUtil.remove(PAYMENT_STEP);
-      SpUtil.remove(INVOICE_ACTIVE);
-      SpUtil.remove(PARKING_STATUS);
-      retribution = null;
-      parkingTime = null;
-      parkingStatus = null;
-      debugPrint("remove LocalData $parkingTime ${retribution}");
+      await clearLocalData();
     }else if(retributions.isNotEmpty){
       retribution = retributions.getAt(0);
       parkingTime = retribution?.createdAt;

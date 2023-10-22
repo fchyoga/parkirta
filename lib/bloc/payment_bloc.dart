@@ -21,6 +21,7 @@ class PaymentBloc extends Cubit<PaymentState> {
     var paymentStep = SpUtil.getString(PAYMENT_STEP, defValue: null);
     debugPrint("payment step ${paymentStep}");
     if(paymentStep == null){
+      SpUtil.remove(INVOICE_ACTIVE);
       paymentChoice();
     }
   }
