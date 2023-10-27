@@ -73,7 +73,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     Timer(const Duration(milliseconds: 500), () async{
 
       getLocalData();
-      // SpUtil.putInt(RETRIBUTION_ID_ACTIVE, 105);
+      // SpUtil.putInt(RETRIBUTION_ID_ACTIVE, 34);
+      // parkingStatus = ParkingStatus.menungguJukir.name;
       // SpUtil.remove(RETRIBUTION_ID_ACTIVE);
       // SpUtil.remove(PAYMENT_STEP);
       var retributionActive = SpUtil.getInt(RETRIBUTION_ID_ACTIVE, defValue: null);
