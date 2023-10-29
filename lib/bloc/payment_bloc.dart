@@ -70,7 +70,7 @@ class PaymentBloc extends Cubit<PaymentState> {
 
   Future<void> leaveParking(int viaJukir, PaymentMethode paymentMethode) async {
     emit(LoadingState(true));
-    final response = await _parkingRepository.leaveParking(retributionId, viaJukir);
+    final response = await _parkingRepository.leaveParking(retributionId, viaJukir, paymentMethode == PaymentMethode.cash ? 1: paymentMethode == PaymentMethode.card ? 0: null);
     emit(LoadingState(false));
     if (response.success) {
       SpUtil.putString(INVOICE_ACTIVE, response.data!.pembayaran.noInvoice);

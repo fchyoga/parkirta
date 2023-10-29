@@ -7,6 +7,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:http/http.dart' as http;
@@ -18,7 +19,6 @@ import 'package:parkirta/data/model/retribusi.dart';
 import 'package:parkirta/ui/profile.dart';
 import 'package:parkirta/utils/contsant/app_colors.dart';
 import 'package:parkirta/utils/contsant/parking_status.dart';
-import 'package:parkirta/utils/contsant/payment_choice.dart';
 import 'package:parkirta/utils/contsant/transaction_const.dart';
 import 'package:parkirta/widget/card/card_timer.dart';
 import 'package:parkirta/widget/dialog/parking_timer_dialog.dart';
@@ -168,7 +168,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         title: Row(
                           children: [
                             Padding(
-                              padding: const EdgeInsets.only(left: 24),
+                              padding: const EdgeInsets.only(left: 20),
                               child: Image.asset(
                                 'assets/images/logo-parkirta2.png',
                                 height: 40,
@@ -178,8 +178,24 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                           ],
                         ),
                         actions: [
+
+                          Container(
+                            margin: const EdgeInsets.only(right: 10),
+                            width: 35,
+                            height: 35,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(35),
+                                border: Border.all(width: 0.5, color: Colors.white.withOpacity(0.5))),
+                            child: IconButton(
+                              onPressed: (){
+                                Navigator.pushNamed(context, '/notification');
+                              },
+                              icon: SvgPicture.asset("assets/images/ic_notification.svg", width: 14),
+                            ),
+                          ),
                           Padding(
-                            padding: const EdgeInsets.only(right: 24),
+                            padding: const EdgeInsets.only(right: 20),
                             child: InkWell(
                               onTap: () {
                                 Navigator.push(

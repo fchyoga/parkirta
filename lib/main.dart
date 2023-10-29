@@ -19,6 +19,7 @@ import 'package:parkirta/ui/auth/register_page.dart';
 import 'package:parkirta/ui/auth/splash_page.dart';
 import 'package:parkirta/ui/home_page.dart';
 import 'package:parkirta/ui/main_page.dart';
+import 'package:parkirta/ui/notification_page.dart';
 import 'package:parkirta/ui/payment/payment_page.dart';
 import 'package:parkirta/ui/payment/payment_success_page.dart';
 import 'package:parkirta/utils/contsant/authentication.dart';
@@ -138,6 +139,7 @@ class _MainAppState extends State<AppView> {
           '/arrive': (context) => ArrivePage(),
           '/payment': (context) => PaymentPage(),
           '/payment_success': (context) => PaymentSuccessPage(),
+          '/notification': (context) => NotificationPage(),
         }
     );
   }

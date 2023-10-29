@@ -80,11 +80,12 @@ class ParkingRepository {
     }
   }
 
-  Future<PaymentEntryResponse> leaveParking(int id, int viaJukir) async {
+  Future<PaymentEntryResponse> leaveParking(int id, int viaJukir, int? idPaymentMethod) async {
     try {
       Map<String, dynamic> data = {
         'id_retribusi_parkir': id.toString(),
-        'is_via_jukir': viaJukir.toString()
+        'is_via_jukir': viaJukir.toString(),
+        'id_metode_pembayaran': idPaymentMethod.toString()
       };
       var response = await http.post(
         Uri.parse(Endpoint.urlLeaveParking),
