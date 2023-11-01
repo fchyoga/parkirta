@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parkirta/color.dart';
 import 'package:http/http.dart' as http;
 import 'package:parkirta/ui/auth/pre_login_page.dart';
+import 'package:parkirta/ui/profile_edit.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -12,7 +13,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   Map<String, dynamic> userData = {};
-  
+
   @override
   void initState() {
     super.initState();
@@ -30,9 +31,9 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
     if (response.statusCode == 200) {
-        setState(() {
-      userData = jsonDecode(response.body)['data'];
-    });
+      setState(() {
+        userData = jsonDecode(response.body)['data'];
+      });
     } else {
       print(response.body); // Cetak pesan respons yang diterima dari API
       throw Exception('Failed to fetch user data');
@@ -114,25 +115,43 @@ class _ProfilePageState extends State<ProfilePage> {
               buildRoundedButton(
                 text: 'Edit Profile',
                 icon: Icons.arrow_forward_ios_rounded,
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => ProfileEdit(
+                            userName: userData.isNotEmpty
+                                ? userData['nama_lengkap']
+                                : '',
+                            userEmail:
+                                userData.isNotEmpty ? userData['email'] : '',
+                            userNohp:
+                                userData.isNotEmpty ? userData['nik'] : '',
+                            userAlamat:
+                                userData.isNotEmpty ? userData['alamat'] : '')),
+                  );
+                },
                 height: 48,
               ),
               SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () async {
-                  SharedPreferences prefs = await SharedPreferences.getInstance();
+                  SharedPreferences prefs =
+                      await SharedPreferences.getInstance();
                   prefs.setBool('isLoggedIn', false);
                   prefs.remove('userRole');
                   prefs.remove('token');
 
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => const PreLoginPage()),
+                    MaterialPageRoute(
+                        builder: (context) => const PreLoginPage()),
                   );
                 },
                 style: ButtonStyle(
                   backgroundColor: MaterialStateProperty.all<Color>(Red500),
-                  foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                  foregroundColor:
+                      MaterialStateProperty.all<Color>(Colors.white),
                   minimumSize: MaterialStateProperty.all<Size>(
                     const Size(double.infinity, 48),
                   ),
