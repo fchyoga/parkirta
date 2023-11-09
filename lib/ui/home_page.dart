@@ -29,14 +29,12 @@ import 'package:sp_util/sp_util.dart';
 import 'package:top_snackbar_flutter/custom_snack_bar.dart';
 import 'package:top_snackbar_flutter/top_snack_bar.dart';
 
-
 class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
-
   late BuildContext _context;
   final _loadingDialog = LoadingDialog();
   GoogleMapController? _mapController;
@@ -62,37 +60,36 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   void setState(fn) {
-    if(mounted) {
+    if (mounted) {
       super.setState(fn);
     }
   }
 
-
   @override
-  void initState(){
-    Timer(const Duration(milliseconds: 500), () async{
-
+  void initState() {
+    Timer(const Duration(milliseconds: 500), () async {
       getLocalData();
       // SpUtil.putInt(RETRIBUTION_ID_ACTIVE, 34);
       // parkingStatus = ParkingStatus.menungguJukir.name;
       // SpUtil.remove(RETRIBUTION_ID_ACTIVE);
       // SpUtil.remove(PAYMENT_STEP);
-      var retributionActive = SpUtil.getInt(RETRIBUTION_ID_ACTIVE, defValue: null);
+      var retributionActive =
+          SpUtil.getInt(RETRIBUTION_ID_ACTIVE, defValue: null);
       debugPrint("parking status ${parkingStatus}");
-      if(retributionActive!=null) _context.read<HomeBloc>().checkDetailParking(retributionActive.toString());
-      if(retributionActive!=null && parkingStatus == ParkingStatus.menungguJukir.name ){
-        var parkingStatus = await Navigator.pushNamed(
-            _context,
-            "/arrive",
-          arguments: retributionActive
-        );
-        if(parkingStatus is String){
+      if (retributionActive != null)
+        _context
+            .read<HomeBloc>()
+            .checkDetailParking(retributionActive.toString());
+      if (retributionActive != null &&
+          parkingStatus == ParkingStatus.menungguJukir.name) {
+        var parkingStatus = await Navigator.pushNamed(_context, "/arrive",
+            arguments: retributionActive);
+        if (parkingStatus is String) {
           setState(() {
             parkingStatus = parkingStatus;
           });
           getLocalData();
         }
-
       }
     });
     _loadParkIcon();
@@ -105,7 +102,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     print("Lifecycle State --> ${state} ");
-    if(state == AppLifecycleState.resumed){
+    if (state == AppLifecycleState.resumed) {
       setState(() {
         parkingStatus = SpUtil.getString(PARKING_STATUS, defValue: null);
       });
@@ -124,110 +121,110 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     // getLocalData();
     return BlocProvider(
         create: (context) => HomeBloc()..getParkingLocation(),
-        child: BlocListener<HomeBloc, HomeState>(
-            listener: (context, state) async{
-              if (state is LoadingState) {
-                state.show ? _loadingDialog.show(context) : _loadingDialog.hide();
-              } else if (state is SuccessGetParkingLocationState) {
-                setState(() {
-                  _parkingLocations = state.data;
-                });
-              } else if (state is SuccessSubmitArrivalState) {
-                SpUtil.putInt(RETRIBUTION_ID_ACTIVE, state.data.idRetribusiParkir);
-                var parkingStatus = await Navigator.pushNamed(
-                    context,
-                    "/arrive",
-                    arguments: state.data.idRetribusiParkir
-                );
-                if(parkingStatus is String){
-                  setState(() {
-                    parkingStatus = parkingStatus;
-                  });
-                  getLocalData();
-                }
-
-              } else if (state is ErrorState) {
-                showTopSnackBar(
-                  context,
-                  CustomSnackBar.error(
-                    message: state.error,
-                  ),
-                );
-              }
-            },
-            child: BlocBuilder<HomeBloc, HomeState>(
-                builder: (context, state) {
-                  _context = context;
-                  return Scaffold(
-                      extendBodyBehindAppBar: true,
-                      appBar: AppBar(
-                        backgroundColor: Red500,
-                        toolbarHeight: 84,
-                        titleSpacing: 0,
-                        automaticallyImplyLeading: false,
-                        title: Row(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(left: 20),
-                              child: Image.asset(
-                                'assets/images/logo-parkirta2.png',
-                                height: 40,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                          ],
-                        ),
-                        actions: [
-
-                          Container(
-                            margin: const EdgeInsets.only(right: 10),
-                            width: 35,
-                            height: 35,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(35),
-                                border: Border.all(width: 0.5, color: Colors.white.withOpacity(0.5))),
-                            child: IconButton(
-                              onPressed: (){
-                                Navigator.pushNamed(context, '/notification');
-                              },
-                              icon: SvgPicture.asset("assets/images/ic_notification.svg", width: 14),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(right: 20),
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => ProfilePage()),
-                                );
-                              },
-                              child: CircleAvatar(
-                                radius: 20,
-                                child: Image.asset('assets/images/profile.png'),
-                              ),
-                            ),
-                          ),
-                        ],
+        child:
+            BlocListener<HomeBloc, HomeState>(listener: (context, state) async {
+          if (state is LoadingState) {
+            state.show ? _loadingDialog.show(context) : _loadingDialog.hide();
+          } else if (state is SuccessGetParkingLocationState) {
+            setState(() {
+              _parkingLocations = state.data;
+            });
+          } else if (state is SuccessSubmitArrivalState) {
+            SpUtil.putInt(RETRIBUTION_ID_ACTIVE, state.data.idRetribusiParkir);
+            var parkingStatus = await Navigator.pushNamed(context, "/arrive",
+                arguments: state.data.idRetribusiParkir);
+            if (parkingStatus is String) {
+              setState(() {
+                parkingStatus = parkingStatus;
+              });
+              getLocalData();
+            }
+          } else if (state is ErrorState) {
+            showTopSnackBar(
+              context,
+              CustomSnackBar.error(
+                message: state.error,
+              ),
+            );
+          }
+        }, child: BlocBuilder<HomeBloc, HomeState>(builder: (context, state) {
+          _context = context;
+          return Scaffold(
+              extendBodyBehindAppBar: true,
+              appBar: AppBar(
+                backgroundColor: Red500,
+                toolbarHeight: 84,
+                titleSpacing: 0,
+                automaticallyImplyLeading: false,
+                title: Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 20),
+                      child: Image.asset(
+                        'assets/images/logo-parkirta2.png',
+                        height: 40,
                       ),
-                      body: SafeArea(
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            SizedBox(
-                              height: MediaQuery.of(context).size.height,
-                              child: GoogleMap(
-                                onMapCreated: _onMapCreated,
-                                zoomControlsEnabled: false,
-                                myLocationButtonEnabled: true,
-                                mapToolbarEnabled: false,
-                                mapType: MapType.normal,
-                                initialCameraPosition: const CameraPosition(
-                                  target: LatLng(-5.143648100120257, 119.48282708990482), // Ganti dengan posisi awal peta
-                                  zoom: 20.0,
-                                ),
-                                markers: Set<Marker>.from(_parkingLocations.map((location) => Marker(
+                    ),
+                    const SizedBox(width: 16),
+                  ],
+                ),
+                actions: [
+                  Container(
+                    margin: const EdgeInsets.symmetric(
+                        vertical: 24, horizontal: 10),
+                    width: 35,
+                    height: 35,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(35),
+                        border: Border.all(
+                            width: 0.5, color: Colors.white.withOpacity(0.5))),
+                    child: IconButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/notification');
+                      },
+                      icon: SvgPicture.asset(
+                          "assets/images/ic_notification.svg",
+                          width: 14),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 20),
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => ProfilePage()),
+                        );
+                      },
+                      child: CircleAvatar(
+                        radius: 20,
+                        child: Image.asset('assets/images/profile.png'),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              body: SafeArea(
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height,
+                      child: GoogleMap(
+                        onMapCreated: _onMapCreated,
+                        zoomControlsEnabled: false,
+                        myLocationButtonEnabled: true,
+                        mapToolbarEnabled: false,
+                        mapType: MapType.normal,
+                        initialCameraPosition: const CameraPosition(
+                          target: LatLng(-5.143648100120257,
+                              119.48282708990482), // Ganti dengan posisi awal peta
+                          zoom: 20.0,
+                        ),
+                        markers: Set<Marker>.from(
+                            _parkingLocations.map((location) => Marker(
                                   markerId: MarkerId(location.id.toString()),
                                   position: LatLng(
                                     double.parse(location.lat),
@@ -235,98 +232,107 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                   ),
                                   icon: defaultIcon,
                                   onTap: () {
-                                    _showParkingLocationPopup(context, location);
+                                    _showParkingLocationPopup(
+                                        context, location);
                                   },
                                 ))).union(_myLocationMarker),
-                                polylines: _polylines,
-                                polygons: Set<Polygon>.from(_parkingLocations.where((e) => e.areaLatlong!=null).toList().map((location) {
-                                  List<String> areaLatLongStrings = location.areaLatlong!.split('},{');
-                                  List<LatLng> polygonCoordinates = areaLatLongStrings.map<LatLng>((areaLatLongString) {
-                                    String latLngString = areaLatLongString.replaceAll('{', '').replaceAll('}', '');
-                                    List<String> latLngList = latLngString.split(',');
+                        polylines: _polylines,
+                        polygons: Set<Polygon>.from(_parkingLocations
+                            .where((e) => e.areaLatlong != null)
+                            .toList()
+                            .map((location) {
+                          List<String> areaLatLongStrings =
+                              location.areaLatlong!.split('},{');
+                          List<LatLng> polygonCoordinates = areaLatLongStrings
+                              .map<LatLng>((areaLatLongString) {
+                            String latLngString = areaLatLongString
+                                .replaceAll('{', '')
+                                .replaceAll('}', '');
+                            List<String> latLngList = latLngString.split(',');
 
-                                    double lat = double.parse(latLngList[0].split(':')[1]);
-                                    double lng = double.parse(latLngList[1].split(':')[1]);
+                            double lat =
+                                double.parse(latLngList[0].split(':')[1]);
+                            double lng =
+                                double.parse(latLngList[1].split(':')[1]);
 
-                                    return LatLng(lat, lng);
-                                  }).toList();
+                            return LatLng(lat, lng);
+                          }).toList();
 
-                                  return Polygon(
-                                    polygonId: PolygonId(location.id.toString()),
-                                    points: polygonCoordinates,
-                                    fillColor: Colors.blue.withOpacity(0.3),
-                                    strokeColor: Colors.blue,
-                                    strokeWidth: 2,
-                                  );
-                                })),
-
-                              ),
+                          return Polygon(
+                            polygonId: PolygonId(location.id.toString()),
+                            points: polygonCoordinates,
+                            fillColor: Colors.blue.withOpacity(0.3),
+                            strokeColor: Colors.blue,
+                            strokeWidth: 2,
+                          );
+                        })),
+                      ),
+                    ),
+                    // Positioned(
+                    //   top: 16.0,
+                    //   right: 16.0,
+                    //   child: FloatingActionButton(
+                    //     backgroundColor: Colors.white,
+                    //     onPressed: () {
+                    //       _cancelRoute();
+                    //     },
+                    //     child: const Icon(Icons.cancel_rounded),
+                    //   ),
+                    // ),
+                    Positioned(
+                        bottom: 16.0,
+                        right: 16.0,
+                        child: InkWell(
+                          child: Container(
+                            alignment: Alignment.center,
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.01),
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 12),
+                                ),
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.05),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 7),
+                                ),
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.09),
+                                  blurRadius: 3,
+                                  offset: const Offset(0, 3),
+                                ),
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.10),
+                                  blurRadius: 2,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
                             ),
-                            // Positioned(
-                            //   top: 16.0,
-                            //   right: 16.0,
-                            //   child: FloatingActionButton(
-                            //     backgroundColor: Colors.white,
-                            //     onPressed: () {
-                            //       _cancelRoute();
-                            //     },
-                            //     child: const Icon(Icons.cancel_rounded),
-                            //   ),
-                            // ),
-                            Positioned(
-                                bottom: 16.0,
-                                right: 16.0,
-                                child: InkWell(
-                                  child: Container(
-                                    alignment: Alignment.center,
-                                    padding:  EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(10),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.grey.withOpacity(0.01),
-                                          blurRadius: 5,
-                                          offset: const Offset(0, 12),),
-                                        BoxShadow(
-                                          color: Colors.grey.withOpacity(0.05),
-                                          blurRadius: 4,
-                                          offset: const Offset(0, 7),),
-                                        BoxShadow(
-                                          color: Colors.grey.withOpacity(0.09),
-                                          blurRadius: 3,
-                                          offset: const Offset(0, 3),),
-                                        BoxShadow(
-                                          color: Colors.grey.withOpacity(0.10),
-                                          blurRadius: 2,
-                                          offset: const Offset(0, 1),),
-                                      ],
-
-                                    ),
-                                    child: const Icon(Icons.my_location_outlined, color: AppColors.textPassive,),
-                                  ),
-                                  onTap: () {
-                                    if(_myLocation!=null) {
-                                      _mapController?.animateCamera(CameraUpdate.newLatLngZoom(_myLocation!, 20));
-                                    } else {
-                                      _getUserLocation();
-                                    }
-                                  },
-                                )
+                            child: const Icon(
+                              Icons.my_location_outlined,
+                              color: AppColors.textPassive,
                             ),
-                            Positioned(
-                                top: 16,
-                                right: 16,
-                                child: cardTimer ?? Container()
-                            )
-
-                          ],
-                        ),
-                      )
-                  );
-                })
-        )
-    );
+                          ),
+                          onTap: () {
+                            if (_myLocation != null) {
+                              _mapController?.animateCamera(
+                                  CameraUpdate.newLatLngZoom(_myLocation!, 20));
+                            } else {
+                              _getUserLocation();
+                            }
+                          },
+                        )),
+                    Positioned(
+                        top: 16, right: 16, child: cardTimer ?? Container())
+                  ],
+                ),
+              ));
+        })));
   }
 
   bool isInLocationArea(LatLng userPosition, List<LatLng> polygonCoordinates) {
@@ -340,11 +346,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
       // Periksa apakah garis dari posisi pengguna ke atas berpotongan dengan sisi poligon
       if (((vertex1.latitude >= userPosition.latitude) !=
-          (vertex2.latitude >= userPosition.latitude)) &&
+              (vertex2.latitude >= userPosition.latitude)) &&
           (userPosition.longitude <=
               (vertex2.longitude - vertex1.longitude) *
-                  (userPosition.latitude - vertex1.latitude) /
-                  (vertex2.latitude - vertex1.latitude) +
+                      (userPosition.latitude - vertex1.latitude) /
+                      (vertex2.latitude - vertex1.latitude) +
                   vertex1.longitude)) {
         // Jika ada persimpangan, tambahkan ke jumlah persimpangan
         intersectCount++;
@@ -358,19 +364,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void _startLocationUpdates() {
     _location.onLocationChanged.listen((loc.LocationData currentLocation) {
       // setState(() {
-        _myLocation = LatLng(
-          currentLocation.latitude!,
-          currentLocation.longitude!,
-        );
-        _myLocationMarker = <Marker>{
-          Marker(
-            markerId: const MarkerId('my_location'),
-            position: _myLocation!,
-            icon: myLocationIcon,
-            infoWindow: const InfoWindow(title: 'My Location'),
-          ),
-        };
-        getLocalData();
+      _myLocation = LatLng(
+        currentLocation.latitude!,
+        currentLocation.longitude!,
+      );
+      _myLocationMarker = <Marker>{
+        Marker(
+          markerId: const MarkerId('my_location'),
+          position: _myLocation!,
+          icon: myLocationIcon,
+          infoWindow: const InfoWindow(title: 'My Location'),
+        ),
+      };
+      getLocalData();
 
       //   parkingStatus = SpUtil.getString(PARKING_STATUS, defValue: null);
       //   if(parkingTime!= null && parkingStatus!= null && parkingStatus != ParkingStatus.menungguJukir.name && parkingStatus != ParkingStatus.telahKeluar.name) {
@@ -404,7 +410,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
-
   Future<Uint8List> _getBytesFromAsset(String path) async {
     final ByteData data = await rootBundle.load(path);
     return data.buffer.asUint8List();
@@ -427,7 +432,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       _isLoading = false;
     });
   }
-
 
   Future<void> _getUserLocation() async {
     loc.LocationData? locationData;
@@ -455,7 +459,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     locationData = await location.getLocation();
     _startLocationUpdates();
 
-    if(locationData==null) return;
+    if (locationData == null) return;
     setState(() {
       _myLocation = LatLng(locationData!.latitude!, locationData!.longitude!);
       _myLocationMarker = <Marker>{
@@ -490,7 +494,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     debugPrint("map created");
 
     SchedulerBinding.instance.addPostFrameCallback((_) {
-      if (_mapController != null && _myLocation!=null) {
+      if (_mapController != null && _myLocation != null) {
         setState(() {
           _myLocationMarker = <Marker>{
             Marker(
@@ -503,16 +507,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         });
       }
     });
-
   }
 
-
-  
-  void _showParkingLocationPopup(BuildContext _context, ParkingLocation location) {
+  void _showParkingLocationPopup(
+      BuildContext _context, ParkingLocation location) {
     debugPrint("_showParkingLocationPopup");
     String title = location.namaLokasi;
     String fotoProfileUrl = 'assets/images/profile.png';
-    if(location.relasiJukir.isEmpty){
+    if (location.relasiJukir.isEmpty) {
       showTopSnackBar(
         context,
         const CustomSnackBar.error(
@@ -523,13 +525,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
 
     String namaJukir = location.relasiJukir[0].jukir.namaLengkap;
-    String statusJukir =  location.relasiJukir[0].jukir.statusJukir;
+    String statusJukir = location.relasiJukir[0].jukir.statusJukir;
     String statusParkir = location.status;
 
     showDialog(
       context: context,
       builder: (context) {
-
         return AlertDialog(
           title: Text(
             title,
@@ -613,9 +614,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   },
                   style: ButtonStyle(
                     backgroundColor: MaterialStateProperty.all<Color>(Red500),
-                    foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                    foregroundColor:
+                        MaterialStateProperty.all<Color>(Colors.white),
                     minimumSize: MaterialStateProperty.all<Size>(Size(88, 36)),
-                    padding: MaterialStateProperty.all<EdgeInsetsGeometry>(EdgeInsets.all(8)),
+                    padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                        EdgeInsets.all(8)),
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5),
@@ -630,25 +633,25 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         );
       },
     );
-
-
   }
-
 
   void _navigateToArrivePage(ParkingLocation location) async {
     try {
-      if(location.areaLatlong==null) return;
+      if (location.areaLatlong == null) return;
       selectedLocation = location;
       // Mendapatkan koordinat tujuan (lokasi parkir)
-      LatLng destination = LatLng(double.parse(location.lat), double.parse(location.long));
+      LatLng destination =
+          LatLng(double.parse(location.lat), double.parse(location.long));
 
       // Menggambar polyline antara posisi Anda saat ini dan lokasi parkir yang dipilih
       _updatePolyline(destination);
 
       // Konversi data polygon ke objek PolygonOptions
       List<String> areaLatLongStrings = location.areaLatlong!.split('},{');
-      List<LatLng> polygonCoordinates = areaLatLongStrings.map<LatLng>((areaLatLongString) {
-        String latLngString = areaLatLongString.replaceAll('{', '').replaceAll('}', '');
+      List<LatLng> polygonCoordinates =
+          areaLatLongStrings.map<LatLng>((areaLatLongString) {
+        String latLngString =
+            areaLatLongString.replaceAll('{', '').replaceAll('}', '');
         List<String> latLngList = latLngString.split(',');
 
         double lat = double.parse(latLngList[0].split(':')[1]);
@@ -657,13 +660,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         return LatLng(lat, lng);
       }).toList();
 
-      bool isInLocationAreaResult = _myLocation!=null ? isInLocationArea(
-        _myLocation!,
-        polygonCoordinates,
-      ): false;
+      bool isInLocationAreaResult = _myLocation != null
+          ? isInLocationArea(
+              _myLocation!,
+              polygonCoordinates,
+            )
+          : false;
 
-
-      if (isInLocationAreaResult && _myLocation!=null) {
+      if (isInLocationAreaResult && _myLocation != null) {
         // Tampilkan dialog lokasi parkir
         showDialog(
           context: context,
@@ -692,20 +696,23 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       onPressed: () async {
                         int userId = await getUserId();
                         _context.read<HomeBloc>().submitArrival(
-                          location.id.toString(),
-                          userId.toString(),
-                          _myLocation!.latitude.toString(),
-                          _myLocation!.longitude.toString(),
-                        );
+                              location.id.toString(),
+                              userId.toString(),
+                              _myLocation!.latitude.toString(),
+                              _myLocation!.longitude.toString(),
+                            );
 
                         Navigator.pop(context);
-
                       },
                       style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all<Color>(Red500),
-                        foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                        minimumSize: MaterialStateProperty.all<Size>(Size(120, 40)),
-                        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                        backgroundColor:
+                            MaterialStateProperty.all<Color>(Red500),
+                        foregroundColor:
+                            MaterialStateProperty.all<Color>(Colors.white),
+                        minimumSize:
+                            MaterialStateProperty.all<Size>(Size(120, 40)),
+                        shape:
+                            MaterialStateProperty.all<RoundedRectangleBorder>(
                           RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(5),
                           ),
@@ -735,7 +742,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   void _updatePolyline(LatLng destination) async {
     // Mendapatkan rute antara posisi pengguna dan tujuan (lokasi parkir)
-    PolylineResult polylineResult = await polylinePoints.getRouteBetweenCoordinates(
+    PolylineResult polylineResult =
+        await polylinePoints.getRouteBetweenCoordinates(
       'AIzaSyA92HfpnxtX1kHsozA0ACaxpq5IQfq9GqI', // Ganti dengan kunci API Google Maps Anda
       PointLatLng(_myLocation?.latitude ?? 0, _myLocation?.longitude ?? 0),
       PointLatLng(destination.latitude, destination.longitude),
@@ -764,28 +772,32 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     }
   }
 
-  CardTimer buildCardTimer(BuildContext context, DateTime? parkingTime, Retribusi retribution){
-    return  CardTimer(dateTime: parkingTime, onClick:  (value){
-      showDialog(context: context, builder: (_) =>
-          ParkingTimerDialog(
-            entryDate: parkingTime!,
-            duration: value,
-            name: retribution.pelanggan?.namaLengkap ?? "-",
-            policeNumber: retribution.nopol ?? "-",
-            location: retribution.lokasiParkir?.namaLokasi ?? "-",
-            address:retribution.lokasiParkir?.alamatLokasi ?? "-",
-            price: (retribution.biayaParkir?.biayaParkir ?? 0).toString(),
-            onClickStop: (){
-              debugPrint("cekkk $parkingTime $value");
-              Navigator.pushNamed(_context, "/payment", arguments: {
-                "retribusi": retribution,
-                "jam": parkingTime,
-                "durasi": DateTime.now().difference(parkingTime)
-              });
-            },
-          )
-      );
-    });
+  CardTimer buildCardTimer(
+      BuildContext context, DateTime? parkingTime, Retribusi retribution) {
+    return CardTimer(
+        dateTime: parkingTime,
+        onClick: (value) {
+          showDialog(
+              context: context,
+              builder: (_) => ParkingTimerDialog(
+                    entryDate: parkingTime!,
+                    duration: value,
+                    name: retribution.pelanggan?.namaLengkap ?? "-",
+                    policeNumber: retribution.nopol ?? "-",
+                    location: retribution.lokasiParkir?.namaLokasi ?? "-",
+                    address: retribution.lokasiParkir?.alamatLokasi ?? "-",
+                    price:
+                        (retribution.biayaParkir?.biayaParkir ?? 0).toString(),
+                    onClickStop: () {
+                      debugPrint("cekkk $parkingTime $value");
+                      Navigator.pushNamed(_context, "/payment", arguments: {
+                        "retribusi": retribution,
+                        "jam": parkingTime,
+                        "durasi": DateTime.now().difference(parkingTime)
+                      });
+                    },
+                  ));
+        });
   }
 
   void _cancelRoute() {
@@ -795,7 +807,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     });
   }
 
-  Future<void> clearLocalData() async{
+  Future<void> clearLocalData() async {
     SpUtil.remove(RETRIBUTION_ID_ACTIVE);
     SpUtil.remove(PAYMENT_STEP);
     SpUtil.remove(INVOICE_ACTIVE);
@@ -805,22 +817,27 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     parkingStatus = null;
     debugPrint("remove LocalData $parkingTime ${retribution}");
   }
-  Future<void> getLocalData() async{
+
+  Future<void> getLocalData() async {
     var retributions = await Hive.openBox<Retribusi>('retribusiBox');
     debugPrint("getLocalData ${retributions.length}");
-    if(retributions.isNotEmpty && retributions.getAt(0)?.statusParkir == ParkingStatus.telahKeluar.name) {
+    if (retributions.isNotEmpty &&
+        retributions.getAt(0)?.statusParkir == ParkingStatus.telahKeluar.name) {
       retributions.deleteAt(0);
       retributions.clear();
       await clearLocalData();
-    }else if(retributions.isNotEmpty){
+    } else if (retributions.isNotEmpty) {
       retribution = retributions.getAt(0);
       parkingTime = retribution?.createdAt;
-      debugPrint("getLocalData $parkingTime ${retributions.getAt(0)?.toJson()}");
-
+      debugPrint(
+          "getLocalData $parkingTime ${retributions.getAt(0)?.toJson()}");
     }
     setState(() {
       parkingStatus = SpUtil.getString(PARKING_STATUS, defValue: null);
-      if(parkingTime!= null && parkingStatus!= null && parkingStatus != ParkingStatus.menungguJukir.name && parkingStatus != ParkingStatus.telahKeluar.name) {
+      if (parkingTime != null &&
+          parkingStatus != null &&
+          parkingStatus != ParkingStatus.menungguJukir.name &&
+          parkingStatus != ParkingStatus.telahKeluar.name) {
         debugPrint("show cardTimer $parkingStatus ");
         cardTimer = buildCardTimer(_context, parkingTime, retribution!);
       } else {
@@ -828,7 +845,4 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       }
     });
   }
-
-
-
 }

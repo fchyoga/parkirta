@@ -38,7 +38,8 @@ void main() async {
   Hive.registerAdapter(LokasiParkirAdapter());
   Hive.registerAdapter(MemberAdapter());
   Bloc.observer = AppBlocObserver();
-  await Firebase.initializeApp(options: const FirebaseOptions(
+  await Firebase.initializeApp(
+      options: const FirebaseOptions(
     apiKey: 'AIzaSyCRlojuTRtBCNauwVM9a7nWvoeFpt_yUkA',
     appId: '1:498872125018:android:3dec57b31c03211a363a63',
     messagingSenderId: '498872125018',
@@ -71,47 +72,49 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-        create: (_) => AuthenticationBloc(),
-        child: const AppView()
-    );
+        create: (_) => AuthenticationBloc(), child: const AppView());
   }
 }
 
 class AppView extends StatefulWidget {
-
   const AppView({Key? key}) : super(key: key);
-
 
   @override
   State<AppView> createState() => _MainAppState();
 }
 
 class _MainAppState extends State<AppView> {
-
   @override
   void initState() {
-
-    FirebaseMessaging.onMessage.listen((RemoteMessage message){
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print("masuk di dalam");
 
       String? topicKey = message.data["topic_key"];
       print("masuk di dalam $topicKey");
-      if(topicKey == PARKING_ACCEPTED){
-        Navigator.pushReplacementNamed(NavigationService.navigatorKey.currentContext!,'/arrive', arguments: int.tryParse(message.data["id"]));
-      }else if(topicKey == PAYMENT_COMPLETE){
-        Navigator.pushNamed(NavigationService.navigatorKey.currentContext!,'/payment_success', arguments: int.tryParse(message.data["id"]));
+      if (topicKey == PARKING_ACCEPTED) {
+        Navigator.pushReplacementNamed(
+            NavigationService.navigatorKey.currentContext!, '/arrive',
+            arguments: int.tryParse(message.data["id"]));
+      } else if (topicKey == PAYMENT_COMPLETE) {
+        Navigator.pushNamed(
+            NavigationService.navigatorKey.currentContext!, '/payment_success',
+            arguments: int.tryParse(message.data["id"]));
       }
-
     });
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       print('A new onMessageOpenedApp event was published! ');
       print('remote message ${message.data} ');
-      if(message.data["topic_key"] == PARKING_ACCEPTED && NavigationService.navigatorKey.currentContext!=null){
-        Navigator.pushNamed(NavigationService.navigatorKey.currentContext!,'/arrive', arguments: int.tryParse(message.data["id"]));
-      }else if(message.data["topic_key"] == PAYMENT_COMPLETE && NavigationService.navigatorKey.currentContext!=null){
-        Navigator.pushNamed(NavigationService.navigatorKey.currentContext!,'/payment_success', arguments: int.tryParse(message.data["id"]));
+      if (message.data["topic_key"] == PARKING_ACCEPTED &&
+          NavigationService.navigatorKey.currentContext != null) {
+        Navigator.pushNamed(
+            NavigationService.navigatorKey.currentContext!, '/arrive',
+            arguments: int.tryParse(message.data["id"]));
+      } else if (message.data["topic_key"] == PAYMENT_COMPLETE &&
+          NavigationService.navigatorKey.currentContext != null) {
+        Navigator.pushNamed(
+            NavigationService.navigatorKey.currentContext!, '/payment_success',
+            arguments: int.tryParse(message.data["id"]));
       }
-
     });
     super.initState();
   }
@@ -140,8 +143,7 @@ class _MainAppState extends State<AppView> {
           '/payment': (context) => PaymentPage(),
           '/payment_success': (context) => PaymentSuccessPage(),
           '/notification': (context) => NotificationPage(),
-        }
-    );
+        });
   }
 }
 
@@ -151,39 +153,34 @@ class AppRoute extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AuthenticationBloc, Authentication>(
-          builder: (context, state) {
-            debugPrint("state change $state");
-            switch (state) {
-              case Authentication.Authenticated:
-                return MainPage();
-              case Authentication.Unauthenticated:
-                return LoginPage();
-              default:
-                return const SplashPage();
-            }
-          },
+      builder: (context, state) {
+        debugPrint("state change $state");
+        switch (state) {
+          case Authentication.Authenticated:
+            return MainPage();
+          case Authentication.Unauthenticated:
+            return LoginPage();
+          default:
+            return const SplashPage();
+        }
+      },
     );
-
   }
 }
-
 
 class NavigationService {
   static GlobalKey<ScaffoldState> navigatorKey = GlobalKey<ScaffoldState>();
 }
-
 
 // ---------- Firebase & Push Notify Configuration
 late AndroidNotificationChannel channel;
 bool isFlutterLocalNotificationsInitialized = false;
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-
-
-
   // If you're going to use other Firebase services in the background, such as Firestore,
   // make sure you call `initializeApp` before using other Firebase services.
-  print('Handling a background message ${message.notification?.title} ${message.notification?.body}');
+  print(
+      'Handling a background message ${message.notification?.title} ${message.notification?.body}');
   print('Handling a background message ${message.data}');
 }
 
@@ -193,7 +190,7 @@ Future<void> setupFlutterNotifications() async {
   }
   FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-  if(Platform.isIOS){
+  if (Platform.isIOS) {
     NotificationSettings settings = await messaging.requestPermission(
       alert: true,
       announcement: false,
@@ -211,7 +208,7 @@ Future<void> setupFlutterNotifications() async {
     'high_importance_channel', // id
     'High Importance Notifications', // title
     description:
-    'This channel is used for important notifications.', // description
+        'This channel is used for important notifications.', // description
     importance: Importance.high,
   );
 
@@ -223,7 +220,7 @@ Future<void> setupFlutterNotifications() async {
   /// default FCM channel to enable heads up notifications.
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
-      AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
 
   /// Update the iOS foreground notification presentation options to allow
@@ -235,6 +232,5 @@ Future<void> setupFlutterNotifications() async {
   );
   isFlutterLocalNotificationsInitialized = true;
 }
-
 
 late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:parkirta/color.dart';
 import 'package:parkirta/utils/contsant/app_colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,64 +13,31 @@ class WalletDashboardPage extends StatefulWidget {
 }
 
 class _WalletDashboardPageState extends State<WalletDashboardPage> {
-  List<Transaction> transactionHistory = [
-    Transaction(
-      icon: Icons.arrow_circle_down_rounded,
-      title: 'Top Up',
-      date: '20 Juni 2023',
-      amount: 'Rp 50,000',
-    ),
-    Transaction(
-      icon: Icons.arrow_circle_up_rounded,
-      title: 'Transfer',
-      date: '19 Juni 2023',
-      amount: '-Rp 25,000',
-    ),
-    Transaction(
-      icon: Icons.arrow_circle_up_rounded,
-      title: 'Transfer',
-      date: '18 Juni 2023',
-      amount: '-Rp 30,000',
-    ),
-    Transaction(
-      icon: Icons.arrow_circle_down_rounded,
-      title: 'Top Up',
-      date: '20 Juni 2023',
-      amount: 'Rp 50,000',
-    ),
-    Transaction(
-      icon: Icons.arrow_circle_up_rounded,
-      title: 'Transfer',
-      date: '19 Juni 2023',
-      amount: '-Rp 25,000',
-    ),
-    Transaction(
-      icon: Icons.arrow_circle_up_rounded,
-      title: 'Transfer',
-      date: '18 Juni 2023',
-      amount: '-Rp 30,000',
-    ),
-    Transaction(
-      icon: Icons.arrow_circle_down_rounded,
-      title: 'Top Up',
-      date: '20 Juni 2023',
-      amount: 'Rp 50,000',
-    ),
-    Transaction(
-      icon: Icons.arrow_circle_up_rounded,
-      title: 'Transfer',
-      date: '19 Juni 2023',
-      amount: '-Rp 25,000',
-    ),
-    Transaction(
-      icon: Icons.arrow_circle_up_rounded,
-      title: 'Transfer',
-      date: '18 Juni 2023',
-      amount: '-Rp 30,000',
-    ),
-  ];
+  Map<String, dynamic> userData = {};
+  List<Map<String, dynamic>> transactionHistory = [];
+  String topUpInvoice = '';
 
   int saldo = 0;
+
+  Future<void> fetchUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    final response = await http.get(
+      Uri.parse('https://parkirta.com/api/profile/detail'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 200) {
+      setState(() {
+        userData = jsonDecode(response.body)['data'];
+      });
+    } else {
+      print(response.body);
+      throw Exception('Failed to fetch user data');
+    }
+  }
 
   Future<String?> getTokenFromSharedPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -127,294 +96,389 @@ class _WalletDashboardPageState extends State<WalletDashboardPage> {
     }
   }
 
-  Future<void> topUp() async {
-    String? token = await getTokenFromSharedPreferences();
+  Future<void> fetchTransactionHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
 
-    if (token == null) {
-      // Token tidak tersedia, handle sesuai kebutuhan
-      return;
-    }
-
-    final requestBody = {
-      // Isi sesuai kebutuhan dengan data untuk top up
-    };
-
-    final response = await http.post(
-      Uri.parse('https://parkirta.com/api/dompet/topup/entry'),
-      body: jsonEncode(requestBody),
+    final response = await http.get(
+      Uri.parse('https://parkirta.com/api/profile/transaksi'),
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
     );
 
     if (response.statusCode == 200) {
-      // Berhasil melakukan top up, lakukan sesuatu dengan respons
-      final responseData = jsonDecode(response.body);
-      // Proses respons sesuai kebutuhan
-    } else {
-      throw Exception('Gagal melakukan top up');
-    }
-  }
-
-  // Fungsi untuk menampilkan dialog pilihan tujuan (akun/kartu)
-  Future<void> _showTujuanDialog() async {
-    String tujuan;
-
-    return showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Pilih Tujuan Top Up'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: Text('Akun'),
-                onTap: () {
-                  tujuan = 'akun';
-                  Navigator.of(context).pop();
-                  _showPaymentInfoDialog(double.tryParse("0"), tujuan, null);
-                },
-              ),
-              ListTile(
-                title: Text('Kartu'),
-                onTap: () {
-                  tujuan = 'kartu';
-                  Navigator.of(context).pop();
-                  _showIdKartuDialog(tujuan);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  // Fungsi untuk menampilkan dialog input id kartu
-  Future<void> _showIdKartuDialog(String tujuan) async {
-    String? idKartu;
-
-    return showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Masukkan ID Kartu'),
-          content: TextField(
-            onChanged: (value) {
-              idKartu = value;
-            },
-            decoration: InputDecoration(
-              hintText: 'Masukkan ID Kartu',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                // Panggil fungsi untuk melakukan top up
-                _entryTopUp(tujuan, idKartu ?? "0");
-                Navigator.of(context).pop();
-              },
-              child: Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // Fungsi untuk melakukan entry top up
-  Future<void> _entryTopUp(String tujuan, String? idKartu) async {
-    double? jumlahTopUp;
-
-    return showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Masukkan Jumlah Top Up'),
-          content: TextField(
-            keyboardType: TextInputType.number,
-            onChanged: (value) {
-              jumlahTopUp = double.tryParse(value);
-            },
-            decoration: InputDecoration(
-              hintText: 'Masukkan Jumlah Top Up',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                // Panggil fungsi untuk menampilkan dialog pembayaran
-                _showPaymentInfoDialog(jumlahTopUp, tujuan, idKartu);
-                Navigator.of(context).pop();
-              },
-              child: Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // Fungsi untuk menampilkan dialog pembayaran
-  Future<void> _showPaymentInfoDialog(
-      double? jumlahTopUp, String tujuan, String? idKartu) async {
-    String? noTransaksi;
-    String? tipePembayaran;
-    String? bank;
-
-    return showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Informasi Pembayaran'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                onChanged: (value) {
-                  noTransaksi = value;
-                },
-                decoration: InputDecoration(
-                  hintText: 'Masukkan No Transaksi',
-                ),
-              ),
-              SizedBox(height: 8),
-              TextField(
-                onChanged: (value) {
-                  tipePembayaran = value;
-                },
-                decoration: InputDecoration(
-                  hintText: 'Masukkan Tipe Pembayaran (bank_transfer/gopay)',
-                ),
-              ),
-              SizedBox(height: 8),
-              TextField(
-                onChanged: (value) {
-                  bank = value;
-                },
-                decoration: InputDecoration(
-                  hintText: 'Masukkan Bank (Jika menggunakan bank)',
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                // Panggil fungsi untuk melakukan pembayaran
-                _payment(jumlahTopUp, tujuan, idKartu, noTransaksi,
-                    tipePembayaran, bank);
-                Navigator.of(context).pop();
-              },
-              child: Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _payment(
-    double? jumlahTopUp,
-    String tujuan,
-    String? idKartu,
-    String? noTransaksi,
-    String? tipePembayaran,
-    String? bank,
-  ) async {
-    // Menyiapkan data untuk API
-    final Map<String, dynamic> paymentData = {
-      'no_invoice': noTransaksi,
-      'payment_type': tipePembayaran,
-      'bank': bank,
-    };
-
-    String? token = await getTokenFromSharedPreferences();
-
-    try {
-      final response = await http.post(
-        Uri.parse('https://parkirta.com/api/dompet/topup/payment'),
-        headers: <String, String>{
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token', // Gantikan dengan token Anda
-        },
-        body: jsonEncode(paymentData),
-      );
-
-      if (response.statusCode == 200) {
-        // Berhasil melakukan pembayaran, Anda dapat menanggapi hasil di sini
-        final responseData = jsonDecode(response.body);
-        // Proses hasil pembayaran sesuai kebutuhan aplikasi Anda
-      } else {
-        throw Exception('Failed to make payment');
+      print('Response Body: ${response.body}');
+      try {
+        final jsonData = jsonDecode(response.body);
+        if (jsonData.containsKey('data') && jsonData['data'] is List) {
+          setState(() {
+            transactionHistory =
+                List<Map<String, dynamic>>.from(jsonData['data']);
+          });
+        } else {
+          print('Response does not contain a valid data field.');
+        }
+      } catch (e) {
+        print('Error decoding JSON: $e');
       }
-    } catch (error) {
-      print('Error in payment: $error');
-      // Handle error, misalnya tampilkan pesan kepada pengguna
+    } else {
+      print(
+          'Failed to fetch transaction history. Status code: ${response.statusCode}');
+      print(response.body);
+      // You might want to handle errors more gracefully here.
     }
   }
 
-  Future<void> _topUp(
-    double? jumlahTopUp,
-    String tujuan,
-    String? idKartu,
-  ) async {
-    // Menyiapkan data untuk API
-    final Map<String, dynamic> topUpData = {
-      'tujuan': tujuan,
-      'id_kartu_parkir': idKartu,
-      'total_topup': jumlahTopUp.toString(),
-    };
-
-    String? token = await getTokenFromSharedPreferences();
+  // Function to initiate the top-up process
+  Future<void> _initiateTopUp(double totalTopUp) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
 
     try {
       final response = await http.post(
         Uri.parse('https://parkirta.com/api/dompet/topup/entry'),
-        headers: <String, String>{
+        headers: {
+          'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token', // Gantikan dengan token Anda
         },
-        body: jsonEncode(topUpData),
+        body: jsonEncode({
+          'tujuan': 'akun',
+          'total_topup': totalTopUp,
+        }),
       );
 
       if (response.statusCode == 200) {
-        // Berhasil melakukan entry top up, Anda dapat menanggapi hasil di sini
         final responseData = jsonDecode(response.body);
-        // Proses hasil entry top up sesuai kebutuhan aplikasi Anda
+
+        if (responseData['success'] == true &&
+            responseData['data'] != null &&
+            responseData['data']['pembayaran'] != null &&
+            responseData['data']['pembayaran']['no_invoice'] != null) {
+          final topUpInvoice = responseData['data']['pembayaran']['no_invoice'];
+          setState(() {
+            this.topUpInvoice = topUpInvoice;
+          });
+
+          // Show Payment Options
+          _showPaymentOptions();
+        } else {
+          print('Failed to get top-up invoice from the response data.');
+          print('Response data: $responseData');
+          // Handle errors as needed
+        }
       } else {
-        throw Exception('Failed to perform top up');
+        print('Failed to initiate top-up. Status code: ${response.statusCode}');
+        print(response.body);
+        // Handle errors as needed
       }
-    } catch (error) {
-      print('Error in top up: $error');
-      // Handle error, misalnya tampilkan pesan kepada pengguna
+    } catch (e) {
+      print('Error initiating top-up: $e');
+      // Handle errors as needed
     }
+  }
+
+  // Function to show the top-up popup
+  void _showTopUpPopup() {
+    double amount = 0.0;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Top-Up Amount'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Enter amount',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(
+                        10.0), // Sesuaikan dengan angka yang diinginkan
+                  ),
+                ),
+                onChanged: (value) {
+                  amount = double.tryParse(value) ?? 0.0;
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close the popup
+              },
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Red500, // Change to your desired color
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _initiateTopUp(amount);
+                Navigator.pop(context); // Close the popup
+              },
+              style: ElevatedButton.styleFrom(primary: Red500),
+              child: Text('Top Up'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showPaymentOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  _performPayment('bank_transfer', 'bca');
+                  Navigator.pop(context); // Close the popup
+                },
+                style: ElevatedButton.styleFrom(primary: Red500, elevation: 0),
+                child: Text('Pay with Bank Transfer (BCA)'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  _performPayment(
+                      'bank_transfer', 'bni'); // Change 'bca' to 'bni'
+                  Navigator.pop(context); // Close the popup
+                },
+                style: ElevatedButton.styleFrom(primary: Red500, elevation: 0),
+                child: Text('Pay with Bank Transfer (BNI)'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  _performPayment(
+                      'bank_transfer', 'bri'); // Add payment with BRI
+                  Navigator.pop(context); // Close the popup
+                },
+                style: ElevatedButton.styleFrom(primary: Red500, elevation: 0),
+                child: Text('Pay with Bank Transfer (BRI)'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  _performPayment('gopay');
+                  Navigator.pop(context); // Close the popup
+                },
+                style: ElevatedButton.styleFrom(primary: Red500, elevation: 0),
+                child: Text('Pay with GoPay'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // Function to perform payment
+  Future<void> _performPayment(String paymentType, [String bank = '']) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://parkirta.com/api/dompet/topup/payment'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'no_invoice': topUpInvoice,
+          'payment_type': paymentType,
+          if (paymentType == 'bank_transfer') 'bank': bank,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        if (responseData['success'] == true &&
+            responseData['data'] != null &&
+            responseData['data']['pembayaran'] != null) {
+          final paymentData = responseData['data']['pembayaran'];
+          _showPaymentDetails(paymentData, paymentType);
+        } else {
+          print('Failed to get payment details from the response data.');
+          print('Response data: $responseData');
+          // Handle errors as needed
+        }
+      } else {
+        print('Failed to perform payment. Status code: ${response.statusCode}');
+        print(response.body);
+        // Handle errors as needed
+      }
+    } catch (e) {
+      print('Error performing payment: $e');
+      // Handle errors as needed
+    }
+  }
+
+  void _showPaymentDetails(
+      Map<String, dynamic> paymentData, String paymentType) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Payment Details',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    'INV. ${paymentData['no_invoice']}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Jumlah Bayar',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Rp. ${paymentData['gross_amount']}',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+              SizedBox(height: 8),
+              if (paymentData['payment_type'] == 'bank_transfer')
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Bank: ${paymentData['bank']}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 12),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Gray500),
+                          ),
+                          child: Text(
+                            paymentData['va_number'],
+                            style: TextStyle(fontSize: 24),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(
+                            text: paymentData['va_number'] ?? ''));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Kode Bayar copied to clipboard'),
+                          ),
+                        );
+                      },
+                      child: Text('Copy Kode Bayar'),
+                      style: ElevatedButton.styleFrom(
+                          primary: Red500, elevation: 0),
+                    ),
+                  ],
+                ),
+              if (paymentData['payment_type'] == 'gopay')
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'QR Code',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 200.0,
+                          height: 200.0,
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Gray500),
+                          ),
+                          child: QrImageView(
+                            data: paymentData['qris'],
+                            version: QrVersions.auto,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    InkWell(
+                      onTap: () {
+                        // Handle the redirection to the Gopay payment page
+                        // You can open the URL using the launch function
+                        // Example: launch(paymentData['deeplink_redirect'])
+                      },
+                      child: Text(
+                        'DeepLink Redirect',
+                        style: TextStyle(
+                          color: Colors.blue, // Change to your desired color
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                  ],
+                ),
+              SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
   void initState() {
     super.initState();
     fetchSaldo();
+    fetchUserData();
+    fetchTransactionHistory();
   }
 
   @override
@@ -491,7 +555,8 @@ class _WalletDashboardPageState extends State<WalletDashboardPage> {
                             ),
                           ),
                           Text(
-                            'email@example.com', // Ganti dengan email dari data pengguna
+                            userData['email'] ??
+                                '', // Ganti dengan email dari data pengguna
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.white.withOpacity(0.7),
@@ -515,7 +580,7 @@ class _WalletDashboardPageState extends State<WalletDashboardPage> {
                           Expanded(
                             child: ElevatedButton(
                               onPressed: () {
-                                _showTujuanDialog();
+                                _showTopUpPopup();
                               },
                               style: ElevatedButton.styleFrom(
                                 textStyle: const TextStyle(
@@ -540,35 +605,6 @@ class _WalletDashboardPageState extends State<WalletDashboardPage> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 15),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                // Aksi untuk tombol Transfer
-                              },
-                              style: ElevatedButton.styleFrom(
-                                textStyle: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                backgroundColor: Colors.white,
-                                foregroundColor: Red500,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 4, vertical: 10),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.import_export_rounded),
-                                  SizedBox(width: 8),
-                                  Text('Transfer'),
-                                ],
-                              ),
-                            ),
-                          ),
                         ],
                       ),
                     ],
@@ -588,71 +624,76 @@ class _WalletDashboardPageState extends State<WalletDashboardPage> {
               ),
             ),
             Expanded(
-                child: ListView.separated(
-              shrinkWrap: true,
-              itemCount: transactionHistory.length,
-              separatorBuilder: (context, index) => SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final transaction = transactionHistory[index];
-                return Container(
-                  padding: EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: transaction.title == "Top Up"
-                              ? AppColors.green
-                              : AppColors.colorPrimary,
-                          borderRadius: BorderRadius.circular(8),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: transactionHistory.length,
+                separatorBuilder: (context, index) => SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final transaction = transactionHistory[index];
+                  return Container(
+                    padding: EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: transaction['payment_type'] == "Top Up"
+                                ? AppColors.green
+                                : AppColors.colorPrimary,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            transaction['payment_type'] == "Top Up"
+                                ? Icons.arrow_upward
+                                : Icons.arrow_downward,
+                            color: Colors.white,
+                          ),
                         ),
-                        child: Icon(
-                          transaction.icon,
-                          color: Colors.white,
-                        ),
-                      ),
-                      SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              transaction.title,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Red900,
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                transaction['payment_type'],
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: transaction['payment_type'] == "Top Up"
+                                      ? AppColors.green
+                                      : AppColors.colorPrimary,
+                                ),
                               ),
-                            ),
-                            Text(
-                              transaction.date,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Gray500,
+                              Text(
+                                transaction['settlement_time'],
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      Text(
-                        transaction.amount,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: transaction.title == "Top Up"
-                              ? AppColors.green
-                              : AppColors.colorPrimary,
+                        Text(
+                          '${transaction['gross_amount']}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: transaction['payment_type'] == "Top Up"
+                                ? AppColors.green
+                                : AppColors.colorPrimary,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            )),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),

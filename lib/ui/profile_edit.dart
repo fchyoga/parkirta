@@ -15,14 +15,8 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 class ProfileEdit extends StatefulWidget {
   final String? userName;
   final String? userEmail;
-  final String? userNohp;
-  final String? userAlamat;
 
-  ProfileEdit(
-      {required this.userName,
-      required this.userEmail,
-      required this.userNohp,
-      required this.userAlamat});
+  ProfileEdit({required this.userName, required this.userEmail});
 
   @override
   State<ProfileEdit> createState() => _ProfileEditState();
@@ -38,22 +32,22 @@ class _ProfileEditState extends State<ProfileEdit> {
   DateTime? _selectedDate;
   TextEditingController nameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
-  TextEditingController nohpController = TextEditingController();
-  TextEditingController alamatController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+  TextEditingController confirmController = TextEditingController();
 
   bool _isFormEmpty() {
     return nameController.text.isEmpty &&
         emailController.text.isEmpty &&
-        nohpController.text.isEmpty &&
-        alamatController.text.isEmpty;
+        passwordController.text.isEmpty &&
+        confirmController.text.isEmpty;
   }
 
   void _clearForm() {
     setState(() {
       nameController.text = '';
       emailController.text = '';
-      nohpController.text = '';
-      alamatController.text = '';
+      passwordController.text = '';
+      confirmController.text = '';
     });
   }
 
@@ -113,22 +107,22 @@ class _ProfileEditState extends State<ProfileEdit> {
 
     if (_image != null) {
       // Membuat request HTTP
-      final url = Uri.parse(
-          'https://sipesat.aksesprimadata.com/api/pengguna/profil/update');
+      final url = Uri.parse('https://parkirta.com/api/profile/update');
       final request = http.MultipartRequest('POST', url);
 
       // Menambahkan header bearer token
       request.headers['Authorization'] = 'Bearer $token';
 
       // Menambahkan data ke dalam fields
-      request.fields['name'] = nameController.text;
+      request.fields['nama_lengkap'] = nameController.text;
       request.fields['email'] = emailController.text;
-      request.fields['no_hp'] = nohpController.text;
-      request.fields['alamat'] = alamatController.text;
+      request.fields['password'] = passwordController.text;
+      request.fields['password_confirm'] = confirmController.text;
+      request.fields['role'] = 'pelanggan';
 
       // Menambahkan file gambar ke dalam request
       request.files.add(
-        await http.MultipartFile.fromPath('file', _image!.path),
+        await http.MultipartFile.fromPath('foto', _image!.path),
       );
 
       try {
@@ -228,8 +222,6 @@ class _ProfileEditState extends State<ProfileEdit> {
     super.initState();
     nameController.text = widget.userName.toString();
     emailController.text = widget.userEmail.toString();
-    nohpController.text = widget.userNohp.toString();
-    alamatController.text = widget.userAlamat.toString();
   }
 
   @override
@@ -375,7 +367,7 @@ class _ProfileEditState extends State<ProfileEdit> {
                       ),
                       SizedBox(height: 16),
                       Text(
-                        'No HP',
+                        'Password',
                         style: TextStyle(
                           fontSize: 12,
                           color: Red900,
@@ -393,11 +385,11 @@ class _ProfileEditState extends State<ProfileEdit> {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: TextFormField(
-                            controller: nohpController,
-                            keyboardType: TextInputType.phone,
+                            controller: passwordController,
+                            keyboardType: TextInputType.visiblePassword,
                             decoration: InputDecoration(
                               border: InputBorder.none,
-                              hintText: 'Masukkan No. HP',
+                              hintText: 'Masukkan Password',
                             ),
                             onChanged: (value) {},
                           ),
@@ -405,7 +397,7 @@ class _ProfileEditState extends State<ProfileEdit> {
                       ),
                       SizedBox(height: 16),
                       Text(
-                        'Alamat',
+                        'Confirm Password',
                         style: TextStyle(
                           fontSize: 12,
                           color: Red900,
@@ -423,11 +415,11 @@ class _ProfileEditState extends State<ProfileEdit> {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: TextFormField(
-                            controller: alamatController,
-                            keyboardType: TextInputType.streetAddress,
+                            controller: confirmController,
+                            keyboardType: TextInputType.visiblePassword,
                             decoration: InputDecoration(
                               border: InputBorder.none,
-                              hintText: 'Masukkan Alamat',
+                              hintText: 'Konfirmasi Password',
                             ),
                             onChanged: (value) {},
                           ),

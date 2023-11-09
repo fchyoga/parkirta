@@ -40,6 +40,108 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  void _showChangePinPopup() {
+    String oldPin = '';
+    String newPin = '';
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Change PIN'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: 'Old PIN'),
+                onChanged: (value) {
+                  oldPin = value;
+                },
+              ),
+              TextField(
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: 'New PIN'),
+                onChanged: (value) {
+                  newPin = value;
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close the popup
+              },
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Red500,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _updatePin(oldPin, newPin);
+                Navigator.pop(context); // Close the popup
+              },
+              style: ElevatedButton.styleFrom(primary: Red500),
+              child: Text('Change PIN'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _updatePin(String oldPin, String newPin) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final idPelanggan = userData['id']; // Ambil ID pelanggan dari userData
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://parkirta.com/api/profile/pin/update'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'id_pelanggan': idPelanggan,
+          'pin_lama': oldPin,
+          'pin_baru': newPin,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        // Handle success response
+        print('PIN updated successfully');
+
+        // Tampilkan notifikasi berhasil
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('PIN updated successfully'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        print('Failed to update PIN. Status code: ${response.statusCode}');
+        print(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Failed to update PIN. Status code: ${response.statusCode}'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        // Handle errors as needed
+      }
+    } catch (e) {
+      print('Error updating PIN: $e');
+      // Handle errors as needed
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -99,16 +201,9 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               SizedBox(height: 24),
               buildRoundedButton(
-                text: 'Dompet Saya',
+                text: 'Change PIN',
                 icon: Icons.arrow_forward_ios_rounded,
-                onPressed: () {},
-                height: 48,
-              ),
-              SizedBox(height: 8),
-              buildRoundedButton(
-                text: 'Riwayat Parkir',
-                icon: Icons.arrow_forward_ios_rounded,
-                onPressed: () {},
+                onPressed: _showChangePinPopup,
                 height: 48,
               ),
               SizedBox(height: 8),
@@ -124,11 +219,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ? userData['nama_lengkap']
                                 : '',
                             userEmail:
-                                userData.isNotEmpty ? userData['email'] : '',
-                            userNohp:
-                                userData.isNotEmpty ? userData['nik'] : '',
-                            userAlamat:
-                                userData.isNotEmpty ? userData['alamat'] : '')),
+                                userData.isNotEmpty ? userData['email'] : '')),
                   );
                 },
                 height: 48,
