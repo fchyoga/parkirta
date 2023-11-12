@@ -690,6 +690,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () async {
+
+                        var retributionActive = SpUtil.getInt(RETRIBUTION_ID_ACTIVE, defValue: null);
+                        if(retributionActive!=null){
+                          showTopSnackBar(
+                            context,
+                            CustomSnackBar.error(
+                              message: "Maaf, anda belum menyelesaikan parkir di ${retribution?.lokasiParkir?.namaLokasi}",
+                            ),
+                          );
+                          Navigator.pop(context);
+                          return;
+                        }
                         int userId = await getUserId();
                         _context.read<HomeBloc>().submitArrival(
                           location.id.toString(),
