@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parkirta/color.dart';
 import 'package:http/http.dart' as http;
 import 'package:parkirta/ui/auth/pre_login_page.dart';
+import 'package:parkirta/ui/profile_edit.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -12,7 +13,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   Map<String, dynamic> userData = {};
-  
+
   @override
   void initState() {
     super.initState();
@@ -30,12 +31,114 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
     if (response.statusCode == 200) {
-        setState(() {
-      userData = jsonDecode(response.body)['data'];
-    });
+      setState(() {
+        userData = jsonDecode(response.body)['data'];
+      });
     } else {
       print(response.body); // Cetak pesan respons yang diterima dari API
       throw Exception('Failed to fetch user data');
+    }
+  }
+
+  void _showChangePinPopup() {
+    String oldPin = '';
+    String newPin = '';
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Change PIN'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: 'Old PIN'),
+                onChanged: (value) {
+                  oldPin = value;
+                },
+              ),
+              TextField(
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: 'New PIN'),
+                onChanged: (value) {
+                  newPin = value;
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close the popup
+              },
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Red500,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _updatePin(oldPin, newPin);
+                Navigator.pop(context); // Close the popup
+              },
+              style: ElevatedButton.styleFrom(primary: Red500),
+              child: Text('Change PIN'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _updatePin(String oldPin, String newPin) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final idPelanggan = userData['id']; // Ambil ID pelanggan dari userData
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://parkirta.com/api/profile/pin/update'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'id_pelanggan': idPelanggan,
+          'pin_lama': oldPin,
+          'pin_baru': newPin,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        // Handle success response
+        print('PIN updated successfully');
+
+        // Tampilkan notifikasi berhasil
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('PIN updated successfully'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        print('Failed to update PIN. Status code: ${response.statusCode}');
+        print(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Failed to update PIN. Status code: ${response.statusCode}'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        // Handle errors as needed
+      }
+    } catch (e) {
+      print('Error updating PIN: $e');
+      // Handle errors as needed
     }
   }
 
@@ -98,41 +201,48 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               SizedBox(height: 24),
               buildRoundedButton(
-                text: 'Dompet Saya',
+                text: 'Change PIN',
                 icon: Icons.arrow_forward_ios_rounded,
-                onPressed: () {},
-                height: 48,
-              ),
-              SizedBox(height: 8),
-              buildRoundedButton(
-                text: 'Riwayat Parkir',
-                icon: Icons.arrow_forward_ios_rounded,
-                onPressed: () {},
+                onPressed: _showChangePinPopup,
                 height: 48,
               ),
               SizedBox(height: 8),
               buildRoundedButton(
                 text: 'Edit Profile',
                 icon: Icons.arrow_forward_ios_rounded,
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => ProfileEdit(
+                            userName: userData.isNotEmpty
+                                ? userData['nama_lengkap']
+                                : '',
+                            userEmail:
+                                userData.isNotEmpty ? userData['email'] : '')),
+                  );
+                },
                 height: 48,
               ),
               SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () async {
-                  SharedPreferences prefs = await SharedPreferences.getInstance();
+                  SharedPreferences prefs =
+                      await SharedPreferences.getInstance();
                   prefs.setBool('isLoggedIn', false);
                   prefs.remove('userRole');
                   prefs.remove('token');
 
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => const PreLoginPage()),
+                    MaterialPageRoute(
+                        builder: (context) => const PreLoginPage()),
                   );
                 },
                 style: ButtonStyle(
                   backgroundColor: MaterialStateProperty.all<Color>(Red500),
-                  foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                  foregroundColor:
+                      MaterialStateProperty.all<Color>(Colors.white),
                   minimumSize: MaterialStateProperty.all<Size>(
                     const Size(double.infinity, 48),
                   ),
