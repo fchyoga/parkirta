@@ -52,6 +52,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   DateTime? parkingTime;
   CardTimer? cardTimer;
 
+  Map<String, dynamic> userData = {};
+
   // Add the code for parkIcon here
   late BitmapDescriptor parkIcon;
   late Uint8List customMarker;
@@ -94,9 +96,30 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     });
     _loadParkIcon();
     // _fetchParkingLocations();
+    fetchUserData();
     _getUserLocation();
     WidgetsBinding.instance.addObserver(this);
     super.initState();
+  }
+
+  Future<void> fetchUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
+    final response = await http.get(
+      Uri.parse('https://parkirta.com/api/profile/detail'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 200) {
+      setState(() {
+        userData = jsonDecode(response.body)['data'];
+      });
+    } else {
+      print(response.body); // Cetak pesan respons yang diterima dari API
+      throw Exception('Failed to fetch user data');
+    }
   }
 
   @override
@@ -141,7 +164,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             }
           } else if (state is ErrorState) {
             showTopSnackBar(
-              context,
+              Overlay.of(context),
               CustomSnackBar.error(
                 message: state.error,
               ),
@@ -200,7 +223,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                       },
                       child: CircleAvatar(
                         radius: 20,
-                        child: Image.asset('assets/images/profile.png'),
+                        backgroundColor:
+                            Colors.transparent, // Sesuaikan sesuai kebutuhan
+                        backgroundImage: userData['foto_pelanggan'] != null
+                            ? NetworkImage(
+                                'https://parkirta.com/storage/uploads/foto/${userData['foto_pelanggan']}',
+                              ) as ImageProvider<
+                                Object> // Memberikan tipe ImageProvider<Object>
+                            : AssetImage('assets/images/profile.png'),
                       ),
                     ),
                   ),
@@ -516,7 +546,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     String fotoProfileUrl = 'assets/images/profile.png';
     if (location.relasiJukir.isEmpty) {
       showTopSnackBar(
-        context,
+        Overlay.of(context),
         const CustomSnackBar.error(
           message: "Jukir tidak tersedia dia area ini",
         ),
@@ -694,13 +724,15 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                     SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () async {
-
-                        var retributionActive = SpUtil.getInt(RETRIBUTION_ID_ACTIVE, defValue: null);
-                        if(retributionActive!=null){
+                        var retributionActive = SpUtil.getInt(
+                            RETRIBUTION_ID_ACTIVE,
+                            defValue: null);
+                        if (retributionActive != null) {
                           showTopSnackBar(
-                            context,
+                            Overlay.of(context),
                             CustomSnackBar.error(
-                              message: "Maaf, anda belum menyelesaikan parkir di ${retribution?.lokasiParkir?.namaLokasi}",
+                              message:
+                                  "Maaf, anda belum menyelesaikan parkir di ${retribution?.lokasiParkir?.namaLokasi}",
                             ),
                           );
                           Navigator.pop(context);

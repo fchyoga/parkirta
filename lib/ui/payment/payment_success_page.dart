@@ -106,7 +106,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
                                   Text("Tarif :",
                                       style: TextStyle(color: AppColors.text)),
                                   Text(
-                                      "Rp ${retribution?.pembayaran?.grossAmount ?? "0"}",
+                                      "Rp ${retribution?.subtotalBiaya ?? "0"}",
                                       style: TextStyle(
                                           color: AppColors.text,
                                           fontWeight: FontWeight.bold)),

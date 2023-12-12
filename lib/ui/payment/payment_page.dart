@@ -73,7 +73,7 @@ class _PaymentPageState extends State<PaymentPage> {
             }
           } else if (state is ErrorState) {
             showTopSnackBar(
-              context,
+              Overlay.of(context),
               CustomSnackBar.error(
                 message: state.error,
               ),

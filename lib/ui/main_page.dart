@@ -55,20 +55,20 @@ class _MainPageState extends State<MainPage> {
         userData = jsonDecode(response.body)['data'];
         _pages = [
           HomePage(),
-
           if (userData['status_pelanggan'] == 'Aktif')
             WalletDashboardPage()
+          else if (userData['foto_ktp'] != null)
+            SubmittedPage()
           else
-            if (userData['foto_ktp'] != null)
-              SubmittedPage()
-            else
-              WalletIntroPage(),
+            WalletIntroPage(),
         ];
       });
-    }  else if (response.statusCode == 403) {
-      showTopSnackBar(_context, CustomSnackBar.error(
-        message: "Sesi anda telah habis. Silakan login kembali",
-      ));
+    } else if (response.statusCode == 403) {
+      showTopSnackBar(
+          Overlay.of(_context),
+          CustomSnackBar.error(
+            message: "Sesi anda telah habis. Silakan login kembali",
+          ));
       _context.read<AuthenticationBloc>().authenticationExpiredEvent();
       Navigator.pushNamedAndRemoveUntil(_context, "/", (route) => false);
     } else {
@@ -93,7 +93,9 @@ class _MainPageState extends State<MainPage> {
               height: 1,
               color: AppColors.cardGrey,
             ),
-            const SizedBox(height: 8,),
+            const SizedBox(
+              height: 8,
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -106,7 +108,9 @@ class _MainPageState extends State<MainPage> {
                           _currentIndex = 0;
                         });
                       },
-                      icon:  SvgPicture.asset( _currentIndex == 0 ? "assets/images/ic_home.svg": "assets/images/ic_home_outline.svg"),
+                      icon: SvgPicture.asset(_currentIndex == 0
+                          ? "assets/images/ic_home.svg"
+                          : "assets/images/ic_home_outline.svg"),
                     ),
                   ],
                 ),
@@ -119,7 +123,9 @@ class _MainPageState extends State<MainPage> {
                           _currentIndex = 1;
                         });
                       },
-                      icon:  SvgPicture.asset( _currentIndex == 1 ? "assets/images/ic_wallet.svg": "assets/images/ic_wallet_outline.svg"),
+                      icon: SvgPicture.asset(_currentIndex == 1
+                          ? "assets/images/ic_wallet.svg"
+                          : "assets/images/ic_wallet_outline.svg"),
                     ),
                   ],
                 ),
@@ -130,74 +136,76 @@ class _MainPageState extends State<MainPage> {
       ),
       floatingActionButton: _currentIndex == 0
           ? Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(
-            bottom: 1,
-              child: Container(
-            width: 55,
-            height: 50,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(50),
-              color: AppColors.colorPrimary,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.colorPrimary.withOpacity(0.25),
-                  blurRadius: 8,
-                  spreadRadius: 2,
-                  offset: const Offset(0, 5),
-                ),
+              alignment: Alignment.center,
+              children: [
+                Positioned(
+                    bottom: 1,
+                    child: Container(
+                      width: 55,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(50),
+                        color: AppColors.colorPrimary,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.colorPrimary.withOpacity(0.25),
+                            blurRadius: 8,
+                            spreadRadius: 2,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                    )),
+                Container(
+                  width: 65,
+                  height: 65,
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(50),
+                    color: AppColors.colorPrimary,
+                  ),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        "/",
+                      );
+                    },
+                    child: SvgPicture.asset("assets/images/ic_discovery.svg"),
+                  ),
+                )
               ],
-            ),)
-          ),
-          Container(
-            width: 65,
-            height: 65,
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(50),
-              color: AppColors.colorPrimary,
-
-            ),
-            child: InkWell(
-              onTap: () {
-                Navigator.pushReplacementNamed(
-                  context,
-                 "/",
-                );
-              },
-              child: SvgPicture.asset("assets/images/ic_discovery.svg"),
-            ) ,
-          )
-        ],
-      ): null,
+            )
+          : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
+
   Future<void> _requestPermissions() async {
     if (Platform.isIOS) {
       await flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin>()
+              IOSFlutterLocalNotificationsPlugin>()
           ?.requestPermissions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
+            alert: true,
+            badge: true,
+            sound: true,
+          );
       await flutterLocalNotificationsPlugin
           .resolvePlatformSpecificImplementation<
-          MacOSFlutterLocalNotificationsPlugin>()
+              MacOSFlutterLocalNotificationsPlugin>()
           ?.requestPermissions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
+            alert: true,
+            badge: true,
+            sound: true,
+          );
     } else if (Platform.isAndroid) {
       final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-      flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+          flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
 
-      final bool? granted = await androidImplementation?.requestPermission();
+      final bool? granted =
+          await androidImplementation?.requestNotificationsPermission();
       // setState(() {
       //   _notificationsEnabled = granted ?? false;
       // });

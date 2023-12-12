@@ -100,8 +100,22 @@ class _ProfilePageState extends State<ProfilePage> {
     final idPelanggan = userData['id']; // Ambil ID pelanggan dari userData
 
     try {
+      // Ganti null dengan string kosong jika oldPin adalah null
+      oldPin ??= "";
+
+      // Tambahkan pengecekan jika newPin adalah null atau kosong
+      if (newPin == null || newPin.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('New PIN cannot be empty'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
+
       final response = await http.post(
-        Uri.parse('https://parkirta.com/api/profile/pin/update'),
+        Uri.parse('https://parkirta.com/api/profile/pin/create'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -181,7 +195,11 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               CircleAvatar(
                 radius: 50,
-                backgroundImage: AssetImage('assets/images/profile.png'),
+                backgroundImage: userData['foto_pelanggan'] != null
+                    ? NetworkImage(
+                            'https://parkirta.com/storage/uploads/foto/${userData['foto_pelanggan']}')
+                        as ImageProvider<Object>
+                    : const AssetImage('assets/images/profile.png'),
               ),
               SizedBox(height: 16),
               Text(
