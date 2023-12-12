@@ -505,20 +505,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _mapController?.animateCamera(CameraUpdate.newLatLngZoom(_myLocation!, 20));
   }
 
-  // Future<void> _fetchParkingLocations() async {
-  //   try {
-  //     debugPrint("get parking");
-  //     List<dynamic> locations = await getLocations();
-  //     debugPrint("loc parking ${locations.length}");
-  //     setState(() {
-  //       _parkingLocations = locations;
-  //     });
-  //   } catch (error, stackTrace) {
-  //     // Handle error fetching parking locations
-  //     debugPrintStack(label: 'Error fetching parking locations: $error',stackTrace: stackTrace);
-  //   }
-  // }
-
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
     debugPrint("map created");

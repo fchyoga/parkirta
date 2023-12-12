@@ -16,6 +16,7 @@ class _WalletDashboardPageState extends State<WalletDashboardPage> {
   Map<String, dynamic> userData = {};
   List<Map<String, dynamic>> transactionHistory = [];
   String topUpInvoice = '';
+  bool _isLoading = false;
 
   int saldo = 0;
 
@@ -223,7 +224,12 @@ class _WalletDashboardPageState extends State<WalletDashboardPage> {
                 Navigator.pop(context); // Close the popup
               },
               style: ElevatedButton.styleFrom(primary: Red500),
-              child: Text('Top Up'),
+              child: Text(
+                'Top Up',
+                style: TextStyle(
+                  color: Colors.white, // Change to your desired color
+                ),
+              ),
             ),
           ],
         );
@@ -240,44 +246,89 @@ class _WalletDashboardPageState extends State<WalletDashboardPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              ElevatedButton(
-                onPressed: () {
-                  _performPayment('bank_transfer', 'bca');
-                  Navigator.pop(context); // Close the popup
-                },
-                style: ElevatedButton.styleFrom(primary: Red500, elevation: 0),
-                child: Text('Pay with Bank Transfer (BCA)'),
+              _buildPaymentButton(
+                'Pay with Bank Transfer (BCA)',
+                'bca',
+                'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Bank_Central_Asia.svg/1200px-Bank_Central_Asia.svg.png',
+                isGoPayButton: false,
               ),
-              ElevatedButton(
-                onPressed: () {
-                  _performPayment(
-                      'bank_transfer', 'bni'); // Change 'bca' to 'bni'
-                  Navigator.pop(context); // Close the popup
-                },
-                style: ElevatedButton.styleFrom(primary: Red500, elevation: 0),
-                child: Text('Pay with Bank Transfer (BNI)'),
+              _buildPaymentButton(
+                'Pay with Bank Transfer (BNI)',
+                'bni',
+                'https://seeklogo.com/images/B/bank-bni-logo-737EE0F32C-seeklogo.com.png',
+                isGoPayButton: false,
               ),
-              ElevatedButton(
-                onPressed: () {
-                  _performPayment(
-                      'bank_transfer', 'bri'); // Add payment with BRI
-                  Navigator.pop(context); // Close the popup
-                },
-                style: ElevatedButton.styleFrom(primary: Red500, elevation: 0),
-                child: Text('Pay with Bank Transfer (BRI)'),
+              _buildPaymentButton(
+                'Pay with Bank Transfer (BRI)',
+                'bri',
+                'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/BRI_2020.svg/2560px-BRI_2020.svg.png',
+                isGoPayButton: false,
               ),
-              ElevatedButton(
-                onPressed: () {
-                  _performPayment('gopay');
-                  Navigator.pop(context); // Close the popup
-                },
-                style: ElevatedButton.styleFrom(primary: Red500, elevation: 0),
-                child: Text('Pay with GoPay'),
+              _buildPaymentButton(
+                'Pay with GoPay',
+                'gopay',
+                'https://datangjikasempat.com/wp-content/uploads/2022/08/LOGO-GOPAY.png',
+                isGoPayButton: true,
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  void _setLoading(bool value) {
+    setState(() {
+      _isLoading = value;
+    });
+  }
+
+  Widget _buildPaymentButton(String label, String method, String imageUrl,
+      {bool isGoPayButton = false}) {
+    return ElevatedButton(
+      onPressed: () async {
+        // Set status loading menjadi true saat memulai pembayaran
+        _setLoading(true);
+
+        if (isGoPayButton) {
+          await _performPayment('gopay');
+        } else {
+          await _performPayment('bank_transfer', method);
+        }
+
+        // Setelah pembayaran selesai, set status loading kembali menjadi false
+        _setLoading(false);
+      },
+      style: ElevatedButton.styleFrom(primary: Red500, elevation: 0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Image.network(
+                imageUrl,
+                width: 24,
+                height: 24,
+                fit: BoxFit.contain,
+              ),
+              SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white, // Change to your desired color
+                ),
+              ),
+            ],
+          ),
+          // Tampilkan indikator loading jika sedang loading
+          if (_isLoading)
+            CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            )
+          else
+            Icon(Icons.arrow_forward_ios, color: Colors.white),
+        ],
+      ),
     );
   }
 
@@ -355,117 +406,152 @@ class _WalletDashboardPageState extends State<WalletDashboardPage> {
                   ),
                 ],
               ),
-              SizedBox(height: 16),
-              Text(
-                'Jumlah Bayar',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
               SizedBox(height: 8),
-              Text(
-                'Rp. ${paymentData['gross_amount']}',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.normal,
-                ),
-              ),
-              SizedBox(height: 8),
-              if (paymentData['payment_type'] == 'bank_transfer')
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              Container(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      'Bank: ${paymentData['bank']}',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                    if (paymentData['payment_type'] == 'bank_transfer')
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Bank: ${paymentData['bank']}',
+                            style: TextStyle(
+                              color: Gray700,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 12),
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(48),
+                                  border: Border.all(color: Gray500),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      paymentData['va_number'],
+                                      style: TextStyle(
+                                        fontSize: 24,
+                                        color: Gray700,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        Clipboard.setData(ClipboardData(
+                                            text: paymentData['va_number'] ??
+                                                ''));
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                                'Kode Bayar copied to clipboard'),
+                                          ),
+                                        );
+                                      },
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.content_copy,
+                                            color: Colors.white,
+                                          ),
+                                          // SizedBox(width: 8),
+                                          // Text(
+                                          //   "Copy",
+                                          //   style: TextStyle(
+                                          //     color: Colors
+                                          //         .white, // Change to your desired color
+                                          //   ),
+                                          // ),
+                                        ],
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                          primary: Red500, elevation: 0),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 16),
+                        ],
                       ),
-                    ),
-                    SizedBox(height: 12),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Gray500),
+                    if (paymentData['payment_type'] == 'gopay')
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'QR Code',
+                            style: TextStyle(
+                              color: Gray700,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          child: Text(
-                            paymentData['va_number'],
-                            style: TextStyle(fontSize: 24),
+                          SizedBox(height: 8),
+                          Container(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 200.0,
+                                  height: 200.0,
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Gray500),
+                                  ),
+                                  child: QrImageView(
+                                    data: paymentData['qris'],
+                                    version: QrVersions.auto,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
                     SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        Clipboard.setData(ClipboardData(
-                            text: paymentData['va_number'] ?? ''));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Kode Bayar copied to clipboard'),
-                          ),
-                        );
-                      },
-                      child: Text('Copy Kode Bayar'),
-                      style: ElevatedButton.styleFrom(
-                          primary: Red500, elevation: 0),
-                    ),
-                  ],
-                ),
-              if (paymentData['payment_type'] == 'gopay')
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
                     Text(
-                      'QR Code',
+                      'Jumlah Bayar',
                       style: TextStyle(
+                        color: Gray700,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     SizedBox(height: 8),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 200.0,
-                          height: 200.0,
-                          padding: EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Gray500),
-                          ),
-                          child: QrImageView(
-                            data: paymentData['qris'],
-                            version: QrVersions.auto,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 8),
-                    InkWell(
-                      onTap: () {
-                        // Handle the redirection to the Gopay payment page
-                        // You can open the URL using the launch function
-                        // Example: launch(paymentData['deeplink_redirect'])
-                      },
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Gray500),
+                      ),
                       child: Text(
-                        'DeepLink Redirect',
+                        'Rp. ${paymentData['gross_amount']}',
                         style: TextStyle(
-                          color: Colors.blue, // Change to your desired color
-                          decoration: TextDecoration.underline,
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                          color: Red500,
                         ),
                       ),
                     ),
                     SizedBox(height: 16),
                   ],
                 ),
-              SizedBox(height: 16),
+              ),
             ],
           ),
         );
